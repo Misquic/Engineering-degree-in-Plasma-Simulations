@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "C:/msys64/ucrt64/bin/g++",  // Zmieniono na ścieżkę do kompilatora w MinGW
+            "args": [
+                "-g",
+                //"-O2",
+                "${fileDirname}/*cpp",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}.exe"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Custom task for building C++ project with MinGW."
+        }
+    ]
+}
