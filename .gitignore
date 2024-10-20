@@ -1,0 +1,27 @@
+#foldery do konfiguracji vs code
+.vscode/
+
+#wykonywalne
+*.exe
+
+#pliki z danymi
+*.vti
+*.csv
+*.mp4
+
+#pliki z konfiguracjami paraview
+*.pvsm
+
+#foldery sluzace do pakowania i wysylania
+send/
+*.zip
+
+#foldery z danymi do debugowania
+results_old/
+results_debug/
+
+#foldery z wynikami z pvsm
+animations/
+
+
+
