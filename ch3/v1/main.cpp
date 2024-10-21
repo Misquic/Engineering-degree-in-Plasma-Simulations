@@ -34,7 +34,7 @@ int main(int argc, char* argv[] ){
         // Instantiate sphere
         type_calc phi_sphere = -100;
         if(argc > 1){
-            phi_sphere = std::atof(argv[1]);            
+            phi_sphere = std::stof(argv[1]);
         }
         objects_ptr = std::make_unique<Objects>(*world_ptr);
         objects_ptr->addObject<Sphere>(type_calc3(0, 0, 0.15), phi_sphere, 0.05);

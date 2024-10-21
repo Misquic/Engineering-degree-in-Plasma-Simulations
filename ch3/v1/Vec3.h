@@ -51,8 +51,8 @@ public:
     Vec3<data_type>& operator=(Vec3<data_type>&& other) noexcept;       //moving operator
     Vec3<data_type> operator+(const Vec3<data_type>& other) const;
     Vec3<data_type> operator-(const Vec3<data_type>& other) const;
-    data_type operator*(const Vec3<data_type>& other) const;
-    Vec3<data_type> operator/(const Vec3<data_type>& other) = delete;
+    data_type       operator*(const Vec3<data_type>& other) const;  //point multiplication
+    Vec3<data_type> operator/(const Vec3<data_type>& other) const;  //elementwise division
     void operator+=(const Vec3<data_type>& other);
     void operator-=(const Vec3<data_type>& other);
     void operator*=(const Vec3<data_type>& other) = delete;
@@ -212,9 +212,18 @@ Vec3<data_type> Vec3<data_type>::operator-(const Vec3<data_type>& other) const{
     return ret;
 };
 template <class data_type>
-data_type Vec3<data_type>::operator*(const Vec3<data_type>& other) const{
+data_type Vec3<data_type>::operator*(const Vec3<data_type>& other) const{ //point multiplication
     return this->data[0]*other.data[0] + this->data[1]*other.data[1] + this->data[2]*other.data[2] ;
 };
+template <class data_type>
+Vec3<data_type> Vec3<data_type>::operator/(const Vec3<data_type>& other) const{ //elementwise division
+    Vec3<data_type> ret(*this);
+    for(int i = 0; i < 3; i++){
+        ret.data[i] /= other.data[i];
+    }
+    return ret;
+}; 
+
 template <class data_type>
 void Vec3<data_type>::operator+=(const Vec3<data_type>& other){
     for(int i = 0; i < 3; i++){
