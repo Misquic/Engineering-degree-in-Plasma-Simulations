@@ -1,14 +1,15 @@
 #include "Object.h"
+#include <cmath>
 
 /*constructors*/
-Object::Object(type_calc3 pos, type_calc3 vel, bool isMovable, World& world): pos{pos}, vel{vel}, isMovable{isMovable}, world{world}{
-    if(!isMovable){
-        vel.clear();
-    }
+Object::Object(type_calc3 pos, type_calc3 vel): pos{pos}, vel{vel}, movable{true}{
 };
-Object::Object(const Object& other) noexcept: pos{other.pos}, vel{other.vel}, isMovable{other.isMovable}, world{other.world}{ //does it work as intended?
+Object::Object(type_calc3 pos): pos{pos}, vel{vel}, movable{false}{
+    vel.clear();
 };
-Object::Object(Object&& other) noexcept: pos{std::move(other.pos)}, vel{std::move(other.vel)}, isMovable{other.isMovable}, world{other.world}{
+Object::Object(const Object& other) noexcept: pos{other.pos}, vel{other.vel}, movable{other.movable}{ //does it work as intended?
+};
+Object::Object(Object&& other) noexcept: pos{std::move(other.pos)}, vel{std::move(other.vel)}, movable{other.movable}{
 };
 
 /*destructors*/
@@ -19,41 +20,48 @@ Object::Object(Object&& other) noexcept: pos{std::move(other.pos)}, vel{std::mov
 Object& Object::operator=(const Object& other) noexcept{
     if(this!= &other){
         this->pos = other.pos;
-        this->vel = other.vel;
+        if(this->movable){
+            this->vel = other.vel;
+        }
     }
     return *this;
 };
 Object& Object::operator=(Object&& other) noexcept{
     if(this!= &other){
         this->pos = std::move(other.pos);
-        this->vel = std::move(other.vel);
+        if(this->movable){
+            this->vel = std::move(other.vel);
+        }
     }
     return *this;
 };
 
 /*methods*/
-void Object::advance(){
-    if(isMovable){
-        pos += vel * world.getDt(); //moves object
-        
-        //if forces to objects are coded
-        //vel += acc / mass * world.getDt();
-    }
+void Object::setPhi(type_calc phi) noexcept{
+    this->phi = phi;
 };
+bool Object::isMovable() noexcept{
+    return movable;
+}
 
+
+/*friends*/
 std::ostream& operator<<(std::ostream& out, const Object& obj){
     out << "Name: " << std::setw(9) << obj.name;
     out << " pos: " << obj.pos;
-    //if(obj.isMovable){
+    if(obj.movable){
         out << " vel: " << obj.vel;
-    //}
+    }
     return out;
 };
 
 //////////////////////////////////////////////////////// SPHERE ////////////////////////////////////////////////////////
 
 /*constructors*/
-Sphere::Sphere(type_calc3 pos, type_calc3 vel, bool isMovable, World& world, type_calc radius): Object(pos, vel, isMovable, world), radius{radius}{
+Sphere::Sphere(type_calc3 pos, type_calc3 vel, type_calc radius): Object(pos, vel), radius{fabs(radius)}{
+    name = "Sphere";
+};
+Sphere::Sphere(type_calc3 pos, type_calc radius): Object(pos), radius{fabs(radius)}{
     name = "Sphere";
 };
 Sphere::Sphere(const Sphere& other): Object(other), radius{other.radius}{
@@ -108,14 +116,20 @@ std::ostream& operator<<(std::ostream& out, const Sphere& obj){
 //////////////////////////////////////////////////////// Rectangle ////////////////////////////////////////////////////////
 
 /*constructors*/
-Rectangle::Rectangle(type_calc3 pos, type_calc3 vel, bool isMovable, World& world, type_calc3 x0, type_calc3 x1, type_calc3 orientation):
-     Object(pos, vel, isMovable, world), x0{x0}, x1{x1}, orientation{orientation}{
+Rectangle::Rectangle(type_calc3 pos, type_calc3 vel, type_calc3 sides, type_calc3 orientation): 
+ Object(pos, vel), orientation{orientation}{
+    this->sides = {fabs(sides[0]), fabs(sides[1]), fabs(sides[2])};
     name = "Rectangle";
 };
-Rectangle::Rectangle(const Rectangle& other): Object(other), x0{other.x0}, x1{other.x1}, orientation{other.orientation}{
+Rectangle::Rectangle(type_calc3 pos, type_calc3 sides, type_calc3 orientation): 
+ Object(pos), orientation{orientation}{
+    this->sides = {fabs(sides[0]), fabs(sides[1]), fabs(sides[2])};
     name = "Rectangle";
 };
-Rectangle::Rectangle(Rectangle&& other): Object(std::move(other)), x0{other.x0}, x1{other.x1}, orientation{other.orientation}{
+Rectangle::Rectangle(const Rectangle& other): Object(other), sides{other.sides}, orientation{other.orientation}{
+    name = "Rectangle";
+};
+Rectangle::Rectangle(Rectangle&& other): Object(std::move(other)), sides{other.sides}, orientation{other.orientation}{
     name = "Rectangle";
 };
 
@@ -124,8 +138,7 @@ Rectangle& Rectangle::operator=(const Object& other) noexcept{
     if(this!= &other){
         Object::operator=(other);
         if(const Rectangle* RectanglePtr = dynamic_cast<const Rectangle*>(&other)){
-            this->x1 = RectanglePtr->x1;
-            this->x0 = RectanglePtr->x0;
+            this->sides = RectanglePtr->sides;
             this->orientation = RectanglePtr->orientation;
         }
         // else radius is left as it is
@@ -136,8 +149,7 @@ Rectangle& Rectangle::operator=(Object&& other) noexcept{
     if(this!= &other){
         Object::operator=(std::move(other));
         if(const Rectangle* RectanglePtr = dynamic_cast<const Rectangle*>(&other)){
-            this->x1 = RectanglePtr->x1;
-            this->x0 = RectanglePtr->x0;
+            this->sides = RectanglePtr->sides;
             this->orientation = RectanglePtr->orientation;
         }
         // else radius is left as it is
@@ -147,8 +159,7 @@ Rectangle& Rectangle::operator=(Object&& other) noexcept{
 Rectangle& Rectangle::operator=(const Rectangle& other) noexcept{
     if(this!= &other){
         Object::operator=(other);
-            this->x1 = other.x1;
-            this->x0 = other.x0;
+            this->sides = other.sides;
             this->orientation = other.orientation;
     }
     return *this;
@@ -156,8 +167,7 @@ Rectangle& Rectangle::operator=(const Rectangle& other) noexcept{
 Rectangle& Rectangle::operator=(Rectangle&& other) noexcept{
     if(this!= &other){
         Object::operator=(std::move(other));
-            this->x1 = other.x1;
-            this->x0 = other.x0;
+            this->sides = other.sides;
             this->orientation = other.orientation;
     }
     return *this;
@@ -165,8 +175,7 @@ Rectangle& Rectangle::operator=(Rectangle&& other) noexcept{
 
 std::ostream& operator<<(std::ostream& out, const Rectangle& obj){ 
     out << static_cast<const Object&>(obj);
-    out << " x0: " << obj.x0;
-    out << " x1: " << obj.x1;
+    out << " sides: " << obj.sides;
     out << " orientation: " << obj.orientation;
     return out;
 };

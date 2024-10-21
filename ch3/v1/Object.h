@@ -16,34 +16,40 @@
     + operators works as intended they copy/move only shared attributes
     TODO sugarcubing, adding objects to world taking them into account in Solver
 */
+class Objects; //forward declaration for Object container named Objects
 
 class Object{
 protected:
     std::string name = "Object";
     type_calc3 pos;    //position
     type_calc3 vel;    //velocity
-    World&     world;  //reference to world object
+
+    /*material properties*/
+    type_calc phi = 0;
+    bool movable;
 
 public:
-    const bool isMovable;
     
     /*constructors*/
-    Object(type_calc3 pos, type_calc3 vel, bool isMovable, World& world); //normal constructor
-    Object(const Object& other) noexcept;  //copying constructor, copies reference to world so that every object refers to the same world(hopefully)
-    Object(Object&& other) noexcept;       //moving constructor, copies reference to world so that every object refers to the same world(hopefully)
+    Object(type_calc3 pos, type_calc3 vel); //normal constructor // needs to be changed
+    Object(type_calc3 pos); //normal constructor for immovable
+    Object(const Object& other) noexcept;  //copying constructor
+    Object(Object&& other) noexcept;       //moving constructor
 
     /*destructor*/
     virtual ~Object() noexcept = default;
 
     /*operators*/
-    virtual Object& operator=(const Object& other) noexcept;  //copies pos and vel, doesn't change world and isMovable
-    virtual Object& operator=(Object&& other) noexcept;       //moves pos and vel, doesn't change world and isMovable
+    virtual Object& operator=(const Object& other) noexcept;  //copies pos and vel, doesn't change movable
+    virtual Object& operator=(Object&& other) noexcept;       //moves pos and vel, doesn't change movable
 
     /*methods*/
-    void advance();
+    void setPhi(type_calc phi) noexcept;
+    bool isMovable() noexcept;
+    // virtual std::ostream print();
 
     friend std::ostream& operator<<(std::ostream& out, const Object& obj);
-
+    friend class Objects;
 };
 
 
@@ -54,7 +60,8 @@ protected:
     type_calc radius;
 public:
     /*constructors*/
-    Sphere(type_calc3 pos, type_calc3 vel, bool isMovable, World& world, type_calc radius);
+    Sphere(type_calc3 pos, type_calc3 vel, type_calc radius);
+    Sphere(type_calc3 pos, type_calc radius);
     Sphere(const Sphere& other);
     Sphere(Sphere&& other);
 
@@ -76,12 +83,12 @@ public:
 
 class Rectangle: public Object{
 protected:
-    type_calc3 x0;
-    type_calc3 x1;
+    type_calc3 sides; // side sizes
     type_calc3 orientation;
 public:
     /*constructors*/
-    Rectangle(type_calc3 pos, type_calc3 vel, bool isMovable, World& world, type_calc3 x0, type_calc3 x1, type_calc3 orientation = {1, 1, 1});
+    Rectangle(type_calc3 pos, type_calc3 vel, type_calc3 sides, type_calc3 orientation);
+    Rectangle(type_calc3 pos, type_calc3 sides, type_calc3 orientation);
     Rectangle(const Rectangle& other);
     Rectangle(Rectangle&& other);
 

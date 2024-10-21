@@ -16,16 +16,22 @@
 int main(int argc, char* argv[] ){
 
     std::vector<Species> species;
+    std::vector<std::unique_ptr<Object>> objects_ptrs; // using vector to object pointers so that we can use polimorphysm and store multiple different Objects in one container
     std::unique_ptr<PotentialSolver> solver_ptr;
     std::unique_ptr<World> world_ptr;
 
     if(argc > 1 && std::string(argv[1]) == "g"){
+        //doesn't support Objects yet
         Instantiator instantiator(world_ptr, species, solver_ptr);
     }
     else{
         // Instantiate World
-        world_ptr = std::make_unique<World>(21, 21, 21, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.2});
-        world_ptr->setTime(2e-10, 1e4);
+        world_ptr = std::make_unique<World>(21, 21, 41, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.4});
+        world_ptr->setTime(1e-7, 400);
+
+        // Instantiate sphere
+        objects_ptrs.reserve(1);
+        objects_ptrs.emplace_back(std::make_unique<Sphere>(type_calc3(0.0, 0.0, 0.0), *world_ptr, 0.1)); //default constructor for immovable Sphere, we use pointers so thats why theres make unique
 
         // Instantiate species
         species.reserve(2);
