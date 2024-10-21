@@ -18,9 +18,9 @@ public:
     ~Objects() noexcept = default;
 
     /*methods*/
-    void advance() const;
+    void advance() const; //for advancing Object(s) in simulation
     template <class T, class... Args>
-    void addObject(Args&&... args);
+    void addObject(Args&&... args); //for adding Object(s) to container
 
     friend std::ostream& operator<<(std::ostream& out, Objects objects);
 };

@@ -28,10 +28,11 @@ public:
     const int ni, nj, nk;  //number of nodes in individual directions
 
     //TO DO take this to protected and add friends which use that Fields
-    Field<type_calc>  phi;       //potential
-    Field<type_calc>  rho;       //charge density
-    Field<type_calc>  node_vol;  //node volumes
-    Field<type_calc3> ef;        //electric field
+    Field<type_calc>  phi;        //potential
+    Field<type_calc>  rho;        //charge density
+    Field<type_calc>  node_vol;   //node volumes
+    Field<type_calc3> ef;         //electric field
+    Field<int>        object_id;  //object id flag to flag fixed nodes
     
     /*constructors*/
     World(int ni, int nj, int nk);
