@@ -80,11 +80,11 @@ Field<data_type>::Field(int ni, int nj, int nk): ni{ni}, nj{nj}, nk{nk}, nn{ni, 
     this->data = std::vector<std::vector<std::vector<data_type>>>(ni, std::vector<std::vector<data_type>>(nj, std::vector<data_type>(nk)));
 };
 template <class data_type>
-Field<data_type>::Field(int nn[3]): ni{nn[0]}, nj{nn[1]}, nk{nn[2]}{
+Field<data_type>::Field(int nn[3]): ni{nn[0]}, nj{nn[1]}, nk{nn[2]}, nn{ni, nj, nk}{
     this->data = std::vector<std::vector<std::vector<data_type>>>(ni, std::vector<std::vector<data_type>>(nj, std::vector<data_type>(nk)));
 };
 template <class data_type>
-Field<data_type>::Field(int3 nn): ni{nn[0]}, nj{nn[1]}, nk{nn[2]}{
+Field<data_type>::Field(int3 nn): ni{nn[0]}, nj{nn[1]}, nk{nn[2]}, nn{ni, nj, nk}{
     this->data = std::vector<std::vector<std::vector<data_type>>>(ni, std::vector<std::vector<data_type>>(nj, std::vector<data_type>(nk)));
 };
 template <class data_type>
