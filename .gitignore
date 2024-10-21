@@ -12,6 +12,9 @@ test.cpp
 #files with ParaView config
 *.pvsm
 
+#files with notes
+*.txt
+
 #folders for zipping and sending
 send/
 *.zip
