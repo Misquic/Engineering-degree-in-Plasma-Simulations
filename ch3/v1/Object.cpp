@@ -43,15 +43,18 @@ void Object::setPhi(type_calc phi) noexcept{
 bool Object::isMovable() noexcept{
     return movable;
 }
+void Object::print(std::ostream& out) const{
+    out << "Name: " << std::setw(9) << name;
+    out << " pos: " << pos;
+    if(movable){
+        out << " vel: " << vel;
+    }
+};
 
 
 /*friends*/
 std::ostream& operator<<(std::ostream& out, const Object& obj){
-    out << "Name: " << std::setw(9) << obj.name;
-    out << " pos: " << obj.pos;
-    if(obj.movable){
-        out << " vel: " << obj.vel;
-    }
+    obj.print(out);
     return out;
 };
 
@@ -107,11 +110,16 @@ Sphere& Sphere::operator=(Sphere&& other) noexcept{
     return *this;
 };       //uses Object move operator= and copies radius
 
-std::ostream& operator<<(std::ostream& out, const Sphere& obj){ 
-    out << static_cast<const Object&>(obj);
-    out << " radius: " << obj.radius;
+void Sphere::print(std::ostream& out) const{ // for 
+    Object::print(out);
+    out << " radius: " << radius;
+};
+
+std::ostream& operator<<(std::ostream& out, Sphere obj){ // for std::cout << <Sphere>
+    obj.print(out);
     return out;
 };
+
 
 //////////////////////////////////////////////////////// Rectangle ////////////////////////////////////////////////////////
 
@@ -173,9 +181,13 @@ Rectangle& Rectangle::operator=(Rectangle&& other) noexcept{
     return *this;
 };       //uses Object move operator= and copies radius
 
-std::ostream& operator<<(std::ostream& out, const Rectangle& obj){ 
-    out << static_cast<const Object&>(obj);
-    out << " sides: " << obj.sides;
-    out << " orientation: " << obj.orientation;
+void Rectangle::print(std::ostream& out) const{
+    Object::print(out);
+    out << " sides: " << sides;
+    out << " orientation: " << orientation;
+};
+
+std::ostream& operator<<(std::ostream& out, Rectangle obj){
+    obj.print(out);
     return out;
 };

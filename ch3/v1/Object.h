@@ -47,6 +47,7 @@ public:
     void setPhi(type_calc phi) noexcept;
     bool isMovable() noexcept;
     // virtual std::ostream print();
+    virtual void print(std::ostream& out) const;
 
     friend std::ostream& operator<<(std::ostream& out, const Object& obj);
     friend class Objects;
@@ -74,8 +75,9 @@ public:
     virtual Sphere& operator=(const Sphere& other) noexcept;           //uses Object copy operator= and copies radius
     virtual Sphere& operator=(Sphere&& other) noexcept;                //uses Object move operator= and copies radius
 
-    friend std::ostream& operator<<(std::ostream& out, const Sphere& obj);
+    virtual void print(std::ostream& out) const override;
 
+    friend std::ostream& operator<<(std::ostream& out, Sphere obj);
 };
 
 
@@ -101,7 +103,10 @@ public:
     virtual Rectangle& operator=(const Rectangle& other) noexcept;        //uses Object copy operator= and copies radius
     virtual Rectangle& operator=(Rectangle&& other) noexcept;             //uses Object move operator= and copies radius
 
-    friend std::ostream& operator<<(std::ostream& out, const Rectangle& obj);
+    virtual void print(std::ostream& out) const override;
+
+    friend std::ostream& operator<<(std::ostream& out, Rectangle obj);
+
 };
 
 
