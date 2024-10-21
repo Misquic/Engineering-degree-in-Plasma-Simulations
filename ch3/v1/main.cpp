@@ -11,9 +11,6 @@
 #include "Object.h"
 #include "Objects.h"
 
-
-//TODO zmienić później pointery na ref, by się łatwiej używało?
-
 int main(int argc, char* argv[] ){
 
     std::vector<Species> species;

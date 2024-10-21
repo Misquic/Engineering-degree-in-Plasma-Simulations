@@ -51,7 +51,6 @@ void Object::print(std::ostream& out) const{
     }
 };
 
-
 /*friends*/
 std::ostream& operator<<(std::ostream& out, const Object& obj){
     obj.print(out);
@@ -62,15 +61,19 @@ std::ostream& operator<<(std::ostream& out, const Object& obj){
 
 /*constructors*/
 Sphere::Sphere(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc radius): Object(pos, vel, phi), radius{fabs(radius)}{
+    r_squared = radius*radius;
     name = "Sphere";
 };
 Sphere::Sphere(type_calc3 pos, type_calc phi, type_calc radius): Object(pos, phi), radius{fabs(radius)}{
+    r_squared = radius*radius;
     name = "Sphere";
 };
 Sphere::Sphere(const Sphere& other): Object(other), radius{other.radius}{
+    r_squared = radius*radius;
     name = "Sphere";
 };
 Sphere::Sphere(Sphere&& other): Object(std::move(other)), radius{other.radius}{
+    r_squared = radius*radius;
     name = "Sphere";
 };
 
@@ -114,6 +117,11 @@ void Sphere::print(std::ostream& out) const{ // for
     Object::print(out);
     out << " radius: " << radius;
 };
+bool Sphere::inObject(type_calc3 x) const{
+    type_calc3 r = x - pos;
+    if(r*r <= r_squared) return true;
+    return false;
+};
 
 std::ostream& operator<<(std::ostream& out, Sphere obj){ // for std::cout << <Sphere>
     obj.print(out);
@@ -127,11 +135,13 @@ std::ostream& operator<<(std::ostream& out, Sphere obj){ // for std::cout << <Sp
 Rectangle::Rectangle(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc3 sides, type_calc3 orientation): 
  Object(pos, vel, phi), orientation{orientation}{
     this->sides = {fabs(sides[0]), fabs(sides[1]), fabs(sides[2])};
+    half_sides = sides*0.5;
     name = "Rectangle";
 };
 Rectangle::Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides, type_calc3 orientation): 
  Object(pos, phi), orientation{orientation}{
     this->sides = {fabs(sides[0]), fabs(sides[1]), fabs(sides[2])};
+    half_sides = sides*0.5;
     name = "Rectangle";
 };
 Rectangle::Rectangle(const Rectangle& other): Object(other), sides{other.sides}, orientation{other.orientation}{
@@ -190,4 +200,15 @@ void Rectangle::print(std::ostream& out) const{
 std::ostream& operator<<(std::ostream& out, Rectangle obj){
     obj.print(out);
     return out;
+};
+bool Rectangle::inObject(type_calc3 x) const{ //for now orientation is not taken into account, to do that convert to inertial system of Rectangle and than use normal isObject?
+    //if(orientation == type_calc3(1, 0, 0))
+    type_calc3 temp = abs(x - pos);
+    for(int i = 0; i < 3; i++){
+        if(temp[i] > half_sides[i]) return false;
+    }
+    return true;
+
+
+
 };

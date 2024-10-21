@@ -1,6 +1,3 @@
-/* TODO zmienić std::vector na std::array lub zwykłe tablice? lub smart pointer*/
-
-
 #ifndef FIELD_H
 #define FIELD_H
 #include <vector>

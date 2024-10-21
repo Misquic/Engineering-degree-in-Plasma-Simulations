@@ -32,7 +32,7 @@ public:
     Field<type_calc>  rho;        //charge density
     Field<type_calc>  node_vol;   //node volumes
     Field<type_calc3> ef;         //electric field
-    Field<int>        object_id;  //object id flag to flag fixed nodes
+    Field<int>        object_id;  //object id flag to flag fixed nodes //calculating that via Objects not Wolrd (unlike the book)
     
     /*constructors*/
     World(int ni, int nj, int nk);
@@ -52,6 +52,8 @@ public:
     type_calc getPE() const;
     type_calc3 XtoL(type_calc3 x) const;   //converts position to logical coordinates
     type_calc3 LtoX(type_calc3 lc) const;  //converts logical coordinates to position
+    type_calc3 LtoX(int3 lc) const;  //converts logical coordinates to position
+    type_calc3 LtoX(int i, int j, int k) const;  //converts logical coordinates to position
 
     //type_calc3 getTs() const;
     void computeChargeDensity(std::vector<Species>& species);

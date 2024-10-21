@@ -1,7 +1,6 @@
 #include "World.h"
 #include "Species.h"
 
-//TODO add instantiating Field by int3 and int[3]
 /*constructors*/
 World::World(int ni, int nj, int nk): nn{ni, nj, nk}, ni{ni}, nj{nj}, nk{nk}, phi(nn), rho(nn), node_vol(nn), ef(nn), object_id(nn),
  time_start{std::chrono::high_resolution_clock::now()}{
@@ -90,10 +89,15 @@ type_calc3 World::XtoL(type_calc3 x) const{ //L - length from begining
 
     return lc; //in world coz x0 and dx used
 };
-type_calc3 World::LtoX(type_calc3 lc) const{ //L - length from begining
+type_calc3 World::LtoX(type_calc3 lc) const{ //converts logical coordinates to position
     return x0 + lc * dx;
 };
-
+type_calc3 World::LtoX(int3 lc) const{ //converts logical coordinates to position
+    return LtoX(type_calc3(lc[0], lc[1], lc[2]));
+};
+type_calc3 World::LtoX(int i, int j, int k) const{ //converts logical coordinates to position
+    return LtoX(type_calc3(i, j, k));
+};
 
 void World::computeChargeDensity(std::vector<Species>& species){
     rho = 0;

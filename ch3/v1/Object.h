@@ -14,14 +14,14 @@
     make different basic shapes using inheritance
 
     + operators works as intended they copy/move only shared attributes
-    TODO sugarcubing, adding objects to world taking them into account in Solver
+    TODO sugarcubing(in progress), adding objects to world(in progress -> made class container, that references world), taking them into account in Solver
 */
 class Objects; //forward declaration for Object container named Objects
 
-class Object{
+class Object{ //abstract class for other shapes
 protected:
     std::string name = "Object";
-    type_calc3 pos;    //position
+    type_calc3 pos;    //position of center of Object
     type_calc3 vel;    //velocity
 
     /*material properties*/
@@ -48,6 +48,7 @@ public:
     bool isMovable() noexcept;
     // virtual std::ostream print();
     virtual void print(std::ostream& out) const;
+    virtual bool inObject(type_calc3 x) const = 0;
 
     friend std::ostream& operator<<(std::ostream& out, const Object& obj);
     friend class Objects;
@@ -59,6 +60,7 @@ public:
 class Sphere: public Object{
 protected:
     type_calc radius;
+    type_calc r_squared;
 public:
     /*constructors*/
     Sphere(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc radius);
@@ -76,6 +78,7 @@ public:
     virtual Sphere& operator=(Sphere&& other) noexcept;                //uses Object move operator= and copies radius
 
     virtual void print(std::ostream& out) const override;
+    virtual bool inObject(type_calc3 x) const override;
 
     friend std::ostream& operator<<(std::ostream& out, Sphere obj);
 };
@@ -86,6 +89,7 @@ public:
 class Rectangle: public Object{
 protected:
     type_calc3 sides; // side sizes
+    type_calc3 half_sides;
     type_calc3 orientation;
 public:
     /*constructors*/
@@ -104,6 +108,7 @@ public:
     virtual Rectangle& operator=(Rectangle&& other) noexcept;             //uses Object move operator= and copies radius
 
     virtual void print(std::ostream& out) const override;
+    virtual bool inObject(type_calc3 x) const override;
 
     friend std::ostream& operator<<(std::ostream& out, Rectangle obj);
 

@@ -10,7 +10,6 @@
 
 //TODO add casting from int to double fo example
 
-
 template <class data_type>
 class Vec3{
 protected:
@@ -58,6 +57,8 @@ public:
     void operator*=(const Vec3<data_type>& other) = delete;
     void operator/=(const Vec3<data_type>& other) = delete;
 
+    bool operator==(const Vec3<data_type>& other) const;
+
 };
 
 /*constructors*/
@@ -92,6 +93,9 @@ template <class data_type>
 void Vec3<data_type>::normalise(){
     (*this)/=(*this).length();
 };
+
+
+
 
 /*operators[]*/
 template <class data_type>
@@ -232,9 +236,17 @@ void Vec3<data_type>::operator+=(const Vec3<data_type>& other){
 };
 template <class data_type>
 void Vec3<data_type>::operator-=(const Vec3<data_type>& other){
-        for(int i = 0; i < 3; i++){
+    for(int i = 0; i < 3; i++){
         this->data[i] -= other.data[i];
     }
+};
+
+template <class data_type>
+bool Vec3<data_type>::operator==(const Vec3<data_type>& other) const{
+    for(int i = 0; i < 3; i++){
+        if(this->data[i] != other.data[i]) return false;
+    }
+    return true;
 };
 
 /*sclalar-vec3 operators*/
@@ -277,12 +289,16 @@ template <class data_type>
 std::ostream& operator<<(std::ostream &out, const Vec3<data_type> &vec3){
 
     //out << std::setprecision(5);// <<"{ "; /*to change?*/
-    out << vec3[0] << " " << vec3[1] << " " << vec3[2];
+    out << std::setw(5) << vec3[0] << " " << std::setw(5) << vec3[1] << " " << std::setw(5) << vec3[2];
     // for(int i=0; i<3; i++){
     //     out << vec3[i] << " ";
     // }
     // out;// << "}";
     return out;
+};
+template <class data_type>
+Vec3<data_type>  abs(const Vec3<data_type> vec){
+    return Vec3<data_type>(std::fabs(vec[0]), std::fabs(vec[1]), std::fabs(vec[2]));
 };
 
 

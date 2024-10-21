@@ -6,6 +6,7 @@
 
 
 //class that is container for Objects
+//TODO add operator[]
 
 class Objects{
 private:
