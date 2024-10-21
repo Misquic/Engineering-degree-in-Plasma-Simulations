@@ -2,9 +2,9 @@
 #include <cmath>
 
 /*constructors*/
-Object::Object(type_calc3 pos, type_calc3 vel): pos{pos}, vel{vel}, movable{true}{
+Object::Object(type_calc3 pos, type_calc3 vel, type_calc phi): pos{pos}, vel{vel}, phi{phi}, movable{true}{
 };
-Object::Object(type_calc3 pos): pos{pos}, vel{vel}, movable{false}{
+Object::Object(type_calc3 pos, type_calc phi): pos{pos}, vel{vel}, phi{phi}, movable{false}{
     vel.clear();
 };
 Object::Object(const Object& other) noexcept: pos{other.pos}, vel{other.vel}, movable{other.movable}{ //does it work as intended?
@@ -61,10 +61,10 @@ std::ostream& operator<<(std::ostream& out, const Object& obj){
 //////////////////////////////////////////////////////// SPHERE ////////////////////////////////////////////////////////
 
 /*constructors*/
-Sphere::Sphere(type_calc3 pos, type_calc3 vel, type_calc radius): Object(pos, vel), radius{fabs(radius)}{
+Sphere::Sphere(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc radius): Object(pos, vel, phi), radius{fabs(radius)}{
     name = "Sphere";
 };
-Sphere::Sphere(type_calc3 pos, type_calc radius): Object(pos), radius{fabs(radius)}{
+Sphere::Sphere(type_calc3 pos, type_calc phi, type_calc radius): Object(pos, phi), radius{fabs(radius)}{
     name = "Sphere";
 };
 Sphere::Sphere(const Sphere& other): Object(other), radius{other.radius}{
@@ -124,13 +124,13 @@ std::ostream& operator<<(std::ostream& out, Sphere obj){ // for std::cout << <Sp
 //////////////////////////////////////////////////////// Rectangle ////////////////////////////////////////////////////////
 
 /*constructors*/
-Rectangle::Rectangle(type_calc3 pos, type_calc3 vel, type_calc3 sides, type_calc3 orientation): 
- Object(pos, vel), orientation{orientation}{
+Rectangle::Rectangle(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc3 sides, type_calc3 orientation): 
+ Object(pos, vel, phi), orientation{orientation}{
     this->sides = {fabs(sides[0]), fabs(sides[1]), fabs(sides[2])};
     name = "Rectangle";
 };
-Rectangle::Rectangle(type_calc3 pos, type_calc3 sides, type_calc3 orientation): 
- Object(pos), orientation{orientation}{
+Rectangle::Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides, type_calc3 orientation): 
+ Object(pos, phi), orientation{orientation}{
     this->sides = {fabs(sides[0]), fabs(sides[1]), fabs(sides[2])};
     name = "Rectangle";
 };

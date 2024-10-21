@@ -31,8 +31,8 @@ protected:
 public:
     
     /*constructors*/
-    Object(type_calc3 pos, type_calc3 vel); //normal constructor // needs to be changed
-    Object(type_calc3 pos); //normal constructor for immovable
+    Object(type_calc3 pos, type_calc3 vel, type_calc phi); //normal constructor // needs to be changed
+    Object(type_calc3 pos, type_calc phi); //normal constructor for immovable
     Object(const Object& other) noexcept;  //copying constructor
     Object(Object&& other) noexcept;       //moving constructor
 
@@ -61,8 +61,8 @@ protected:
     type_calc radius;
 public:
     /*constructors*/
-    Sphere(type_calc3 pos, type_calc3 vel, type_calc radius);
-    Sphere(type_calc3 pos, type_calc radius);
+    Sphere(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc radius);
+    Sphere(type_calc3 pos, type_calc phi, type_calc radius);
     Sphere(const Sphere& other);
     Sphere(Sphere&& other);
 
@@ -89,8 +89,8 @@ protected:
     type_calc3 orientation;
 public:
     /*constructors*/
-    Rectangle(type_calc3 pos, type_calc3 vel, type_calc3 sides, type_calc3 orientation);
-    Rectangle(type_calc3 pos, type_calc3 sides, type_calc3 orientation);
+    Rectangle(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc3 sides, type_calc3 orientation);
+    Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides, type_calc3 orientation);
     Rectangle(const Rectangle& other);
     Rectangle(Rectangle&& other);
 

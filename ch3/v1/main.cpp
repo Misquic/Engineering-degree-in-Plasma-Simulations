@@ -9,6 +9,7 @@
 #include "PotentialSolver.h"
 #include "Species.h"
 #include "Object.h"
+#include "Objects.h"
 
 
 //TODO zmienić później pointery na ref, by się łatwiej używało?
@@ -16,7 +17,8 @@
 int main(int argc, char* argv[] ){
 
     std::vector<Species> species;
-    std::vector<std::unique_ptr<Object>> objects_ptrs; // using vector to object pointers so that we can use polimorphysm and store multiple different Objects in one container
+    //std::vector<std::unique_ptr<Object>> objects_ptrs; // using vector to object pointers so that we can use polimorphysm and store multiple different Objects in one container
+    std::unique_ptr<Objects> objects_ptr;
     std::unique_ptr<PotentialSolver> solver_ptr;
     std::unique_ptr<World> world_ptr;
 
@@ -30,8 +32,12 @@ int main(int argc, char* argv[] ){
         world_ptr->setTime(1e-7, 400);
 
         // Instantiate sphere
-        objects_ptrs.reserve(1);
-        objects_ptrs.emplace_back(std::make_unique<Sphere>(type_calc3(0.0, 0.0, 0.0), *world_ptr, 0.1)); //default constructor for immovable Sphere, we use pointers so thats why theres make unique
+        type_calc phi_sphere = -100;
+        if(argc > 1){
+            phi_sphere = std::atof(argv[1]);            
+        }
+        objects_ptr = std::make_unique<Objects>(*world_ptr);
+        objects_ptr->addObject<Sphere>(type_calc3(0, 0, 0.15), phi_sphere, 0.05);
 
         // Instantiate species
         species.reserve(2);

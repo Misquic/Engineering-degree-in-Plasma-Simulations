@@ -1,26 +1,46 @@
 #include "World.h"
 #include "Species.h"
 
+//TODO add instantiating Field by int3 and int[3]
 /*constructors*/
-World::World(int ni, int nj, int nk): nn{ni, nj, nk}, ni{ni}, nj{nj}, nk{nk}, phi(ni, nj, nk), rho(ni, nj, nk), node_vol(ni, nj, nk), ef(ni, nj, nk), time_start{std::chrono::high_resolution_clock::now()}{
+World::World(int ni, int nj, int nk): nn{ni, nj, nk}, ni{ni}, nj{nj}, nk{nk}, phi(nn), rho(nn), node_vol(nn), ef(nn), object_id(nn),
+ time_start{std::chrono::high_resolution_clock::now()}{
 };
-World::World(int3 nn): nn{nn[0], nn[1], nn[2]}, ni{nn[0]}, nj{nn[1]}, nk{nn[2]}, phi(ni, nj, nk), rho(ni, nj, nk), node_vol(ni, nj, nk), ef(ni, nj, nk), time_start{std::chrono::high_resolution_clock::now()}{
+World::World(int3 nn): nn{nn[0], nn[1], nn[2]}, ni{nn[0]}, nj{nn[1]}, nk{nn[2]}, phi(nn), rho(nn), node_vol(nn), ef(nn), object_id(nn),
+ time_start{std::chrono::high_resolution_clock::now()}{
 };
-World::World(int ni, int nj, int nk, type_calc x1, type_calc y1, type_calc z1, type_calc x2, type_calc y2, type_calc z2): nn{ni, nj, nk}, ni{ni}, nj{nj}, nk{nk}, phi(ni, nj, nk), rho(ni, nj, nk), node_vol(ni, nj, nk), ef(ni, nj, nk), time_start{std::chrono::high_resolution_clock::now()}{
+World::World(int ni, int nj, int nk, type_calc x1, type_calc y1, type_calc z1, type_calc x2, type_calc y2, type_calc z2): nn{ni, nj, nk},
+ ni{ni}, nj{nj}, nk{nk}, phi(nn), rho(nn), node_vol(nn), ef(nn), object_id(nn), time_start{std::chrono::high_resolution_clock::now()}{
     setExtents(x1, y1, z1, x2, y2, z2);
 };
-World::World(int ni, int nj, int nk, type_calc3 vec1, type_calc3 vec2): nn{ni, nj, nk}, ni{ni}, nj{nj}, nk{nk}, phi(ni, nj, nk), rho(ni, nj, nk), node_vol(ni, nj, nk), ef(ni, nj, nk), time_start{std::chrono::high_resolution_clock::now()}{
+World::World(int ni, int nj, int nk, type_calc3 vec1, type_calc3 vec2): nn{ni, nj, nk}, ni{ni}, nj{nj}, nk{nk}, phi(nn), rho(nn), node_vol(nn),
+ ef(nn), object_id(nn), time_start{std::chrono::high_resolution_clock::now()}{
     setExtents(vec1, vec2);
 };
 World::World(const World& other) noexcept: nn{other.ni, other.nj, other.nk}, ni{other.ni},
  nj{other.nj}, nk{other.nk}, phi(other.phi), rho(other.rho), node_vol(other.node_vol),
- ef(other.ef), time_start{std::chrono::high_resolution_clock::now()}, x0{other.x0}, dx{other.dx},
+ ef(other.ef), object_id(other.object_id), time_start{std::chrono::high_resolution_clock::now()}, x0{other.x0}, dx{other.dx},
  xm{other.xm}, xc{other.xc}, dt{other.dt}, num_ts{other.num_ts}, ts{other.ts}, time{other.time} {
 };
-World::World(World&& other) noexcept: nn{other.ni, other.nj, other.nk}, ni{other.ni},
- nj{other.nj}, nk{other.nk}, phi(other.phi), rho(other.rho), node_vol(other.node_vol),
- ef(other.ef), time_start{std::chrono::high_resolution_clock::now()}, x0{other.x0}, dx{other.dx},
- xm{other.xm}, xc{other.xc}, dt{other.dt}, num_ts{other.num_ts}, ts{other.ts}, time{other.time} {
+World::World(World&& other) noexcept:
+ nn{other.ni, other.nj, other.nk},
+ ni{other.ni},
+ nj{other.nj},
+ nk{other.nk}, 
+ phi(std::move(other.phi)), 
+ rho(std::move(other.rho)), 
+ node_vol(std::move(other.node_vol)),
+ ef(std::move(other.ef)), 
+ object_id(std::move(other.object_id)), 
+ time_start{std::chrono::high_resolution_clock::now()}, 
+ x0{other.x0}, 
+ dx{other.dx},
+ xm{other.xm}, 
+ xc{other.xc}, 
+ dt{other.dt}, 
+ num_ts{other.num_ts},
+ ts{other.ts}, 
+ time{other.time} {
 };
 
 /*methods*/
