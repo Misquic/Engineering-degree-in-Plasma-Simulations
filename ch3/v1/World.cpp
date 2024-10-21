@@ -74,14 +74,6 @@ type_calc3 World::getXm() const{
 type_calc3 World::getXc() const{
     return type_calc3(xc);
 };
-type_calc3 World::XtoL(type_calc3 x) const{ //L - length from begining
-    type_calc3 lc{};
-    lc[0] = (x[0] - x0[0])/dx[0];
-    lc[1] = (x[1] - x0[1])/dx[1];
-    lc[2] = (x[2] - x0[2])/dx[2];
-
-    return lc; //in world coz x0 and dx used
-};
 type_calc World::getPE() const{
     type_calc pe{};
     for(int i = 0; i < ni; i++){
@@ -92,7 +84,15 @@ type_calc World::getPE() const{
         }
     }
     return 0.5*Const::eps_0*pe;
-}
+};
+type_calc3 World::XtoL(type_calc3 x) const{ //L - length from begining
+    type_calc3 lc = (x - x0)/dx;
+
+    return lc; //in world coz x0 and dx used
+};
+type_calc3 World::LtoX(type_calc3 lc) const{ //L - length from begining
+    return x0 + lc * dx;
+};
 
 
 void World::computeChargeDensity(std::vector<Species>& species){

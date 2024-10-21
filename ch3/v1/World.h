@@ -49,8 +49,9 @@ public:
     type_calc3 getDx() const;
     type_calc3 getXm() const;
     type_calc3 getXc() const;
-    type_calc3 XtoL(type_calc3 x) const;
     type_calc getPE() const;
+    type_calc3 XtoL(type_calc3 x) const;   //converts position to logical coordinates
+    type_calc3 LtoX(type_calc3 lc) const;  //converts logical coordinates to position
 
     //type_calc3 getTs() const;
     void computeChargeDensity(std::vector<Species>& species);
