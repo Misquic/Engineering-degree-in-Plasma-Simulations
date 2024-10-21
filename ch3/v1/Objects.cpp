@@ -23,7 +23,7 @@ void Objects::advance() const{
     }
 };
 
-std::ostream& operator<<(std::ostream& out, Objects objects){
+std::ostream& operator<<(std::ostream& out, Objects objects){ //they are not slicing anymore :D
     for(const std::shared_ptr<Object>& obj_ptr: objects.objects){
         out << *obj_ptr;
         out << "\n";
