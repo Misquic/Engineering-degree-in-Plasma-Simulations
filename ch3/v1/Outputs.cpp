@@ -34,6 +34,11 @@ void Output::fields(World& world, std::vector<Species>& species, std::string nam
 	out<<world.node_vol;
 	out<<"</DataArray>\n";
 
+	/*objects ids, scalar*/
+	out<<"<DataArray Name=\"ObjectID\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
+	out<<world.object_id;
+	out<<"</DataArray>\n";
+
 	/*potential, scalar*/
 	out<<"<DataArray Name=\"phi\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
 	out<<world.phi;

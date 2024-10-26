@@ -1,3 +1,6 @@
+#include <map>
+#include <sstream>
+#include "funkc.h"
 #include "World.h"
 #include "Species.h"
 
@@ -90,7 +93,11 @@ type_calc3 World::XtoL(type_calc3 x) const{ //L - length from begining
     return lc; //in world coz x0 and dx used
 };
 type_calc3 World::LtoX(type_calc3 lc) const{ //converts logical coordinates to position
-    return x0 + lc * dx;
+static type_calc3 ret{};
+    for(int i = 0; i < 3; i++){
+        ret[i] = x0[i] + lc[i] * dx[i];
+    }
+    return ret;
 };
 type_calc3 World::LtoX(int3 lc) const{ //converts logical coordinates to position
     return LtoX(type_calc3(lc[0], lc[1], lc[2]));
@@ -111,6 +118,113 @@ bool World::inBounds(type_calc3 pos){
     for (int i=0;i<3;i++)
         if (pos[i]<x0[i] || pos[i]>=xm[i]) return false;
     return true;
+};
+void World::addInlet(std::string face){
+    static std::map<std::string, int> faces{ //map to map faces to ints to work easier later
+        {"x-", 0},
+        {"x+", 1},
+        {"y-", 2},
+        {"y+", 3},
+        {"z-", 4},
+        {"z+", 5},
+        {"-x", 0},
+        {"+x", 1},
+        {"-y", 2},
+        {"+y", 3},
+        {"-z", 4},
+        {"+z", 5},
+    };
+    lower(face);
+    if(faces.find(face) == faces.end()){ //checking if passed wrong argument
+        throw std::invalid_argument("Passed wrong face name.");
+        return;
+    }
+    int find = faces[face];
+    switch(find){
+    case 0:
+        for(int j = 0; j < nj; j++){
+            for(int k = 0; k < nk; k++){
+                object_id[0][j][k] = 2;
+                phi[0][j][k] = 0;
+            }
+        }
+        break;
+    case 1:
+        for(int j = 0; j < nj; j++){
+            for(int k = 0; k < nk; k++){
+                object_id[ni-1][j][k] = 2;
+                phi[ni-1][j][k] = 0;
+            }
+        }
+        break;
+    case 2:
+        for(int i = 0; i < ni; i++){
+            for(int k = 0; k < nk; k++){
+                object_id[i][0][k] = 2;
+                phi[i][0][k] = 0;
+            }
+        }
+        break;
+    case 3:
+        for(int i = 0; i < ni; i++){
+            for(int k = 0; k < nk; k++){
+                object_id[i][nj-1][k] = 2;
+                phi[i][nj-1][k] = 0;
+            }
+        }
+        break;
+    case 4:
+        for(int i = 0; i < ni; i++){
+            for(int j = 0; j < nj; j++){
+                object_id[i][j][0] = 2;
+                phi[i][j][0] = 0;
+            }
+        }
+        break;
+    case 5:
+        for(int i = 0; i < ni; i++){
+            for(int j = 0; j < nj; j++){
+                object_id[i][j][nk-1] = 2;
+                phi[i][j][nk-1] = 0;
+            }
+        }
+        break;
+    default:
+        throw std::invalid_argument("Something went wrong, addInlet default for switch");
+        break;
+    }
+};
+void World::computeObjectID(){
+    for(const std::shared_ptr<Object>& obj_ptr: objects){
+        for(int i = 0; i < this->ni; i++){
+            for(int j = 0; j < this->nj; j++){
+                for (int k = 0; k < this->nk; k++){
+                    if(obj_ptr->inObject(this->LtoX(i, j, k))){
+                        object_id[i][j][k] = 1;
+                        phi[i][j][k] = obj_ptr->getPhi();
+                    }
+                }
+            }
+        }
+    }
+};
+bool World::inObject(const type_calc3& pos) const{
+    for(const std::shared_ptr<Object>& obj_ptr: objects){
+        if(obj_ptr->inObject(pos)) return true;
+    }
+    return false;
+};
+std::string World::printObjects()const{
+    std::stringstream ss;
+    for(const std::shared_ptr<Object>& obj_ptr: objects){
+        ss << *obj_ptr << "\n";
+    }
+    return ss.str();
+};
+void World::printObjects(std::ostream& out)const{
+    for(const std::shared_ptr<Object>& obj_ptr: objects){
+        out << *obj_ptr << "\n";
+    }
 };
 
 //time

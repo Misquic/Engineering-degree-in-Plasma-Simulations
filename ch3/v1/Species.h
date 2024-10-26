@@ -29,11 +29,12 @@ public:
     const std::string name;    //name of (micro)particle
     const type_calc   mass;    //mass of single (micro)particle
     const type_calc   charge;  //charge of sinlge (micro)particle
+    const type_calc   mpw0;    //deafult macroparticle weight
 
     Field<type_calc> den;  //number density;
 
     /*constructors*/
-    Species(std::string name, type_calc mass, type_calc charge, World& world);
+    Species(std::string name, type_calc mass, type_calc charge, World& world, type_calc mpw0);
 
     /*methods*/
     size_t getNumParticles() const;

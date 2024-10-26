@@ -4,17 +4,15 @@
 #include <string>
 #include "all.h"
 #include "Vec3.h"
-#include "World.h"
 
 /*ideas:
     make movable and immovable objects
         -immovable: contributes as Dirichlet conditions
-        -movable: contributes as Dirichlet conditions but moves according to some pattern, e.g. constant gravity, these are big object
+        -NOT DOING THIS ANYMORE movable: contributes as Dirichlet conditions but moves according to some pattern, e.g. constant gravity, these are big object
         that aren't moved due to E or B because they are too big, falling charged ball
     make different basic shapes using inheritance
 
     + operators works as intended they copy/move only shared attributes
-    TODO sugarcubing(in progress), adding objects to world(in progress -> made class container, that references world), taking them into account in Solver
 */
 class Objects; //forward declaration for Object container named Objects
 
@@ -45,6 +43,7 @@ public:
 
     /*methods*/
     void setPhi(type_calc phi) noexcept;
+    type_calc getPhi() noexcept;
     bool isMovable() noexcept;
     // virtual std::ostream print();
     virtual void print(std::ostream& out) const;
