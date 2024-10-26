@@ -1,9 +1,12 @@
 #ifndef WORLD_H
 #define WORLD_H
+#include <chrono>
+#include <memory>
 #include "all.h"
 #include "Field.h"
 #include "Vec3.h"
-#include <chrono>
+#include "Object.h"
+
 
 
 class Species;
@@ -19,6 +22,7 @@ protected:
     int ts = -1;     //time step
     type_calc time = 0;
     std::chrono::time_point<std::chrono::high_resolution_clock> time_start;
+    std::vector<std::shared_ptr<Object>> objects;
 
     /*protected methods*/
     void computeNodeVolumes();
@@ -58,6 +62,15 @@ public:
     //type_calc3 getTs() const;
     void computeChargeDensity(std::vector<Species>& species);
     bool inBounds(type_calc3 pos);
+    void addInlet(std::string face = "-z");
+
+    //Objects
+    void computeObjectID();
+    bool inObject(const type_calc3& pos) const;
+    template<class T, class... Args>
+    void addObject(Args&&... args);
+    std::string printObjects()const;
+    void printObjects(std::ostream& out)const;
 
     //time
     void setTime(type_calc dt, int num_ts);
@@ -73,5 +86,18 @@ public:
     World& operator=(World&& other);
 };
 
+template <class T, class... Args>
+void World::addObject(Args&&... args){
+    static_assert(std::is_base_of<Object, T>::value, "T must derive from Object");
+    try{
+        objects.emplace_back(std::make_shared<T>(std::forward<Args>(args)...));
+    }
+    catch (const std::invalid_argument& e) {
+        std::cerr << "Error adding object, supposedly you used wrong arguments that do not match any of constructor of Object or derived class: " << e.what() << '\n';
+    } catch (...) {
+        std::cerr << "Unknown error occurred while adding object\n";
+    }
+
+}
 
 #endif

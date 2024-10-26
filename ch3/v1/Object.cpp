@@ -40,6 +40,10 @@ Object& Object::operator=(Object&& other) noexcept{
 void Object::setPhi(type_calc phi) noexcept{
     this->phi = phi;
 };
+type_calc Object::getPhi() noexcept{
+    return phi;
+};
+
 bool Object::isMovable() noexcept{
     return movable;
 }
@@ -119,7 +123,7 @@ void Sphere::print(std::ostream& out) const{ // for
 };
 bool Sphere::inObject(type_calc3 x) const{
     type_calc3 r = x - pos;
-    if(r*r <= r_squared) return true;
+    if(r * r <= r_squared) return true;
     return false;
 };
 

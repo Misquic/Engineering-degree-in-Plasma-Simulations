@@ -29,4 +29,7 @@ animations/
 #folders with vscode config
 .vscode/
 
+#folders for building app
+build/
+
 

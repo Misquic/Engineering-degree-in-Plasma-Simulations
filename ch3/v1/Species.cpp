@@ -8,7 +8,8 @@ Particle::Particle(type_calc3 pos, type_calc3 vel, type_calc macro_weight) noexc
 };
 
 /*Species constructors*/
-Species::Species(std::string name, type_calc mass, type_calc charge, World& world): name{name}, mass{mass}, charge{charge}, world{world}, den{world.ni, world.nj, world.nk} {
+Species::Species(std::string name, type_calc mass, type_calc charge, World& world, type_calc mpw0): name{name}, mass{mass},
+ charge{charge}, world{world}, mpw0{mpw0}, den{world.ni, world.nj, world.nk} {
 };
 
 /*Species methods*/
@@ -22,36 +23,47 @@ void Species::advance(){
 
     type_calc3 lc{};
     type_calc3 ef_part{};
-    for(Particle& part : particles){
-        lc = world.XtoL(part.pos);
-        
+    
+    ////////////////////////////// ??? /////////////////////////////
+    size_t np = particles.size();
+    Particle* part_ptr;
+    for(size_t p = 0; p < np; p++){
+        part_ptr = &particles[p];
+        lc = world.XtoL(part_ptr->pos);
+
         ef_part = world.ef.gather(lc);
 
-        part.vel += ef_part*(dt*charge/mass);
+        part_ptr->vel += ef_part*(dt*charge/mass);
+        part_ptr->pos += part_ptr->vel * dt;
 
-        // if(ef_part[0]*(dt*charge/mass) > 0.0001){
-        //     std::cout << part.pos << " ";
-        //     std::cout << part.vel*dt << " ";
-        // }
-
-        part.pos += part.vel*dt;
-
-        // if(ef_part[0]*(dt*charge/mass) > 0.0001){
-        //     std::cout << part.pos << " \n";
-        // }
-
-        //boundary check, reflective
-        for(int i = 0; i < 3; i++){
-            if(part.pos[i]<x0[i]){
-                part.pos[i] = 2.0 * x0[i] - part.pos[i];
-                part.vel[i]*= -1.0;
-            }
-            else if(part.pos[i]>=xm[i]){
-                part.pos[i] = 2.0 * xm[i] - part.pos[i];
-                part.vel[i]*= -1.0;
-            }
+        if(world.inObject(part_ptr->pos) || !world.inBounds(part_ptr->pos)){
+            particles[p] = particles[np-1]; //use std::move? this would result in problem with pointer?
+            np--;
+            p--;
         }
     }
+
+
+    // for(Particle& part : particles){
+    //     lc = world.XtoL(part.pos);
+        
+    //     ef_part = world.ef.gather(lc);
+
+    //     part.vel += ef_part*(dt*charge/mass);
+    //     part.pos += part.vel*dt;
+
+    //     if(world.inObject(part.pos) || !world.inBounds(part.pos)){
+    //         part.macro_weight = 0;
+    //         continue;
+    //     }
+    // }
+    // size_t np = particles.size();
+    // for(size_t p = 0; p < np; p++){
+    //     if(particles[p].macro_weight>0) continue;
+    //     particles[p] = particles[np-1]; //use std::move?
+    //     np--;
+    //     p--;
+    // }
 };
 void Species::computeNumberDensity(){
 
