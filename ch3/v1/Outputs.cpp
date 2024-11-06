@@ -39,6 +39,11 @@ void Output::fields(World& world, std::vector<Species>& species, std::string nam
 	out<<world.object_id;
 	out<<"</DataArray>\n";
 
+	/*node_type, scalar*/
+	out<<"<DataArray Name=\"NodeType\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
+	out<<world.node_type;
+	out<<"</DataArray>\n";
+
 	/*potential, scalar*/
 	out<<"<DataArray Name=\"phi\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
 	out<<world.phi;
@@ -54,6 +59,14 @@ void Output::fields(World& world, std::vector<Species>& species, std::string nam
 	{
 		out<<"<DataArray Name=\"nd."<<sp.name<<"\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
 		out<<sp.den;
+		out<<"</DataArray>\n";
+	}
+
+	/*species average number densities*/
+	for (Species &sp : species)
+	{
+		out<<"<DataArray Name=\"avg_nd."<<sp.name<<"\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
+		out<<sp.den_avg;
 		out<<"</DataArray>\n";
 	}
 	
@@ -73,10 +86,10 @@ void Output::fields(World& world, std::vector<Species>& species, std::string nam
 //writes information to the screen
 void Output::screenOutput(World &world, std::vector<Species> &species)
 {
-	std::cout<<"ts: "<<world.getTs();
+	std::cout<<"\r                                                                                \rts: "<<world.getTs();
 	for (Species &sp:species)
-		std::cout<<std::setprecision(3)<<"\t "<<sp.name<<":"<<sp.getNumParticles();
-	std::cout<<std::endl;
+		std::cout<<std::setprecision(3)<<"\t "<<sp.name<<":"<<sp.getNumParticles()<< " ";
+	//std::cout<<std::endl;
 }
 
 //file stream handle

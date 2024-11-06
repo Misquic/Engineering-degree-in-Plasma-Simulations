@@ -9,7 +9,7 @@ Particle::Particle(type_calc3 pos, type_calc3 vel, type_calc macro_weight) noexc
 
 /*Species constructors*/
 Species::Species(std::string name, type_calc mass, type_calc charge, World& world, type_calc mpw0): name{name}, mass{mass},
- charge{charge}, world{world}, mpw0{mpw0}, den{world.ni, world.nj, world.nk} {
+ charge{charge}, world{world}, mpw0{mpw0}, den{world.nn}, den_avg{world.nn} {
 };
 
 /*Species methods*/
@@ -24,26 +24,27 @@ void Species::advance(){
     type_calc3 lc{};
     type_calc3 ef_part{};
     
-    ////////////////////////////// ??? /////////////////////////////
+    ////////////////////////////// BETTER FASTER STRONGER??? /////////////////////////////
     size_t np = particles.size();
     Particle* part_ptr;
     for(size_t p = 0; p < np; p++){
         part_ptr = &particles[p];
-        lc = world.XtoL(part_ptr->pos);
+        type_calc3 lc = world.XtoL(part_ptr->pos);
 
-        ef_part = world.ef.gather(lc);
+        type_calc3 ef_part = world.ef.gather(lc);
 
         part_ptr->vel += ef_part*(dt*charge/mass);
         part_ptr->pos += part_ptr->vel * dt;
 
         if(world.inObject(part_ptr->pos) || !world.inBounds(part_ptr->pos)){
-            particles[p] = particles[np-1]; //use std::move? this would result in problem with pointer?
+            particles[p] = std::move(particles[np-1]); //use std::move? this would result in problem with pointer?
             np--;
             p--;
         }
     }
+    particles.erase(particles.begin() + np, particles.end());
 
-
+    ////////////////////////////////////// LIKE ORIGINAL /////////////////////////////////////////////
     // for(Particle& part : particles){
     //     lc = world.XtoL(part.pos);
         
@@ -64,6 +65,8 @@ void Species::advance(){
     //     np--;
     //     p--;
     // }
+    // particles.erase(particles.begin() + np, particles.end());
+
 };
 void Species::computeNumberDensity(){
 
@@ -194,4 +197,7 @@ type_calc Species::getPE(){ //inmplement somewhere else variable that tracks it 
         pe += part.macro_weight * phi_part;
     }
     return pe * charge;
+};
+void Species::updateAverages(){
+    den_avg.updateAverage(den);
 };

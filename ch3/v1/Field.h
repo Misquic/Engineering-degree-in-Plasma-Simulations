@@ -14,6 +14,7 @@ template <class data_type>
 class Field{
 protected:
     std::vector<std::vector<std::vector<data_type>>> data; //3D container
+    int avg_samples = 0;
 
 public:
     const int ni, nj, nk;  //number of nodes in individual directions
@@ -35,6 +36,7 @@ public:
     void clear();
     void scatter(type_calc3 lc, type_calc val);
     data_type gather(type_calc3 lc) const;
+    void updateAverage(const Field<data_type>& other);
 
     /*operators []*/
     std::vector<std::vector<data_type>>& operator[](int i);
@@ -192,6 +194,18 @@ data_type Field<data_type>::gather(type_calc3 lc) const{
           data[i+1][j+1][k] * (di) * (dj) * (one_dk) + 
           data[i+1][j+1][k+1] * (di) * (dj) * (dk);
     return val;
+};
+template <class data_type>
+void Field<data_type>::updateAverage(const Field<data_type>& other){
+    avg_samples++;
+
+    for(int i = 0; i < this->ni; i++){
+        for(int j = 0; j < this->nj; j++){
+            for(int k = 0; k < this->nk; k++){
+                data[i][j][k] = (other[i][j][k] + data[i][j][k]*(avg_samples - 1.0))/avg_samples;
+            }
+        }
+    }
 };
 
 

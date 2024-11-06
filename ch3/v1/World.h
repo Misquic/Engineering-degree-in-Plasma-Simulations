@@ -17,11 +17,21 @@ protected:
     type_calc3 dx;  //cell spacing
     type_calc3 xm;  //mesh max bound
     type_calc3 xc;  //mesh center
+
+    /*time*/
     type_calc dt = 1e-4;     //time step
     int num_ts = 0;     //time step
     int ts = -1;     //time step
     type_calc time = 0;
     std::chrono::time_point<std::chrono::high_resolution_clock> time_start;
+
+    /*steady state*/
+    bool steady_state = false;
+    type_calc last_mass = 0;
+    type_calc last_mom = 0;
+    type_calc last_en = 0;
+
+    
     std::vector<std::shared_ptr<Object>> objects;
 
     /*protected methods*/
@@ -30,13 +40,16 @@ protected:
 public:
     const int nn[3];       //number of nodes
     const int ni, nj, nk;  //number of nodes in individual directions
+    const int nv;          //volume in nodes
 
-    //TO DO take this to protected and add friends which use that Fields
+    //TODO take this to protected and add friends which use that Fields
     Field<type_calc>  phi;        //potential
     Field<type_calc>  rho;        //charge density
     Field<type_calc>  node_vol;   //node volumes
     Field<type_calc3> ef;         //electric field
-    Field<int>        object_id;  //object id flag to flag fixed nodes //calculating that via Objects not Wolrd (unlike the book)
+    Field<int>        object_id;  //object id flag to flag fixed nodes //calculating that via Objects not World (unlike the book)
+    Field<type_calc>  object_phi;  //object phi for fixed nodes //calculating that via Objects not World (unlike the book)
+    Field<int>  node_type;  //node_type
     
     /*constructors*/
     World(int ni, int nj, int nk);
@@ -58,13 +71,14 @@ public:
     type_calc3 LtoX(type_calc3 lc) const;  //converts logical coordinates to position
     type_calc3 LtoX(int3 lc) const;  //converts logical coordinates to position
     type_calc3 LtoX(int i, int j, int k) const;  //converts logical coordinates to position
+    bool steadyState(std::vector<Species>& species);
 
     //type_calc3 getTs() const;
     void computeChargeDensity(std::vector<Species>& species);
     bool inBounds(type_calc3 pos);
     void addInlet(std::string face = "-z");
 
-    //Objects
+    /*Objects*/
     void computeObjectID();
     bool inObject(const type_calc3& pos) const;
     template<class T, class... Args>
@@ -72,7 +86,7 @@ public:
     std::string printObjects()const;
     void printObjects(std::ostream& out)const;
 
-    //time
+    /*time*/
     void setTime(type_calc dt, int num_ts);
     type_calc getDt() const;
     int getTs() const;

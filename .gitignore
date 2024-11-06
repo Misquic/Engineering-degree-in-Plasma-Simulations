@@ -1,4 +1,6 @@
-#executables
+#executables and scripts
+*.bat
+*.sh
 *.exe
 
 #files with data
@@ -31,5 +33,6 @@ animations/
 
 #folders for building app
 build/
+build_debug/
 
 

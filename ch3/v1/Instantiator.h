@@ -32,7 +32,7 @@ private:
 
     //solver
     std::vector<std::string> Snames     = {"mi", "tol"};
-
+    SolverType Stype = PCG;
 
 public:
     //solver 

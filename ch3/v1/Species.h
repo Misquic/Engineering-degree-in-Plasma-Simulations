@@ -32,6 +32,7 @@ public:
     const type_calc   mpw0;    //deafult macroparticle weight
 
     Field<type_calc> den;  //number density;
+    Field<type_calc> den_avg; //average number density;
 
     /*constructors*/
     Species(std::string name, type_calc mass, type_calc charge, World& world, type_calc mpw0);
@@ -45,9 +46,10 @@ public:
     //void addParticle(Particle particle); //not used, to do?
     void loadParticleBox(type_calc3 x1, type_calc3 x2, type_calc num_den, type_calc num_macro);
     void loadParticleBoxQS(type_calc3 x1, type_calc3 x2, type_calc num_den, int3 num_macro);
-    type_calc getMicroCount();
-    type_calc3 getMomentum();
-    type_calc getKE();
-    type_calc getPE();
+    type_calc  getMicroCount();   // calculate and return all number of micro particles
+    type_calc3 getMomentum();     // calculate and return momentum
+    type_calc  getKE();           // calculate and return kinetic energy
+    type_calc  getPE();           // calculate and return potential energy
+    void       updateAverages();  // update all average values
 };
 #endif

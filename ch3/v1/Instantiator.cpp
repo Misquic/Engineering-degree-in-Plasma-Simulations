@@ -25,7 +25,7 @@ Instantiator::Instantiator(std::unique_ptr<World>& otherWorld, std::vector<Speci
 
     std::cout << "SOLVER\n";
     readParametersSolver();
-    otherSolver = std::make_unique<PotentialSolver>(*otherWorld, Smax_it, Stolerance);
+    otherSolver = std::make_unique<PotentialSolver>(*otherWorld, Smax_it, Stolerance, Stype);
 };
 
 void Instantiator::readParametersWorld(){
