@@ -5,8 +5,8 @@ ColdBeamSource::ColdBeamSource(Species& species, World& world, type_calc v_drift
  sp{species}, world{world}, v_drift{v_drift}, den{den}, inlet_Face{inlet_Face}{
     dx = world.getDx();
     x0 = world.getX0();
-    Lx = dx[0] * world.ni-1;
-    Lx = dx[1] * world.nj-1;
+    Lx = dx[0] * (world.ni-1);
+    Ly = dx[1] * (world.nj-1);
     A = Lx*Ly;
     num_micro = den*v_drift*A*world.getDt(); //N = n*v*A*dt
 };
@@ -14,7 +14,8 @@ ColdBeamSource::ColdBeamSource(Species& species, World& world, type_calc v_drift
 
 void ColdBeamSource::sample(){
     extern Rnd rnd;
-    int num_macro = (int)(num_macro/sp.mpw0 + rnd());
+    //num_micro = den*v_drift*A*world.getDt(); //N = n*v*A*dt 
+    int num_macro = (int)(num_micro/sp.mpw0 + rnd());
 
     type_calc3 pos{}, vel{};
     for(int i = 0; i < num_macro; i++){ //Z- face

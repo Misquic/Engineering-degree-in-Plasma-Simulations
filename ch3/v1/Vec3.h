@@ -87,7 +87,7 @@ void Vec3<data_type>::clear(){
 };
 template <class data_type>
 type_calc Vec3<data_type>::length(){
-    return sqrt((*this)*(*this));
+    return std::sqrt((*this)*(*this));
 };
 template <class data_type>
 void Vec3<data_type>::normalise(){
