@@ -42,13 +42,13 @@ public:
     Matrix& operator=(Matrix&& other);
     tcvector operator*(const tcvector& v) const; // matrix * vector = vector
     type_calc& operator()(int r, int c); // reference to A[r,c]
-    const type_calc& operator()(int r, int c) const;
-    type_calc get(int r, int c) const; // value at A[r,c]
+    const type_calc& operator()(int r, int c) const; // for const correctness
+    //type_calc get(int r, int c) const; // value at A[r,c]
     
     /*methods*/
     void clearRow(int r);
-    Matrix diagSubtract(const tcvector& v);
-    Matrix invDiagonal();
+    Matrix diagSubtract(const tcvector& v) const;
+    Matrix invDiagonal() const;
     type_calc multiplyRow(int r, const tcvector& v) const;
     //tcvector getRow(int r);    
     
