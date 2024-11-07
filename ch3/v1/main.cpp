@@ -16,6 +16,10 @@
 
 int main(int argc, char* argv[] ){
 
+    if(argc > 1 && std::string(argv[1]) == "--help"){
+        print_help();
+        return 0;
+    }
     std::vector<Species> species;
     std::vector<ColdBeamSource> sources;
     //std::vector<std::unique_ptr<Object>> objects_ptrs; // using vector to object pointers so that we can use polimorphysm and store multiple different Objects in one container
@@ -24,12 +28,13 @@ int main(int argc, char* argv[] ){
 
     if(argc > 1 && std::string(argv[1]) == "g"){
         //doesn't support Objects yet
+        //TODO trash it? command line arguments are usable and better, but Instatniator might be better for future UI?
         Instantiator instantiator(world_ptr, species, solver_ptr);
         //set ref values solver
         //ad objects and calc object_id
     }
     else{
-        std::cout << "Running without Instatniator, you can use program arguments: Solver_type Solver_max_it phi_sphere \n";
+        std::cout << "Running without Instatniator, you can use program arguments: --s_type --s_max_it --sphere_phi \n\n";
         // Instantiate World
         world_ptr = std::make_unique<World>(21, 21, 41, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.4});
         world_ptr->setTime(1e-7, 400);

@@ -14,6 +14,8 @@
 #include <regex>
 #include "all.h"
 
+void print_help();
+
 template <typename T>
 T parseArgument(const std::vector<std::string>& args, const std::string& option, T defaultValue) {
     for (size_t i = 0; i < args.size(); ++i) {
