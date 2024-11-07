@@ -65,17 +65,13 @@ Row<S>& Row<S>::operator=(Row<S>&& other) noexcept{
 ///////////////////////////////// MATRIX ///////////////////////////////////////////
 
 /*constructors*/
-Matrix::Matrix(int n_unknowns) noexcept: n_unknowns{n_unknowns}{
-    this->rows = std::vector<Row<nvals>>(n_unknowns);
+Matrix::Matrix(int n_unknowns) noexcept: n_unknowns{n_unknowns}, rows{std::vector<Row<nvals>>(n_unknowns)}{
 };
-Matrix::Matrix(const Matrix& other) noexcept: n_unknowns{other.n_unknowns}{
-    this->rows.reserve(n_unknowns);
-    this->rows = other.rows;
-
+Matrix::Matrix(const Matrix& other) noexcept: Matrix(other.n_unknowns){
+    rows = other.rows;
 };
-Matrix::Matrix(Matrix&& other) noexcept: n_unknowns{other.n_unknowns}{
-    this->rows.reserve(n_unknowns);
-    this->rows = std::move(other.rows);
+Matrix::Matrix(Matrix&& other) noexcept: Matrix(other.n_unknowns){
+    rows = std::move(other.rows);
 };
 /*operators*/
 Matrix& Matrix::operator=(const Matrix& other){
@@ -140,14 +136,17 @@ const type_calc& Matrix::operator()(int r, int c) const{
 void Matrix::clearRow(int r){
     rows[r] = Row<nvals>();
 };
-Matrix Matrix::diagSubtract(const tcvector& v){
-    Matrix ret(*this);
-    for(int i = 0; i < n_unknowns; i++){
-        ret(i,i) = (*this)(i,i) - v[i];
-    }
-    return ret;
+Matrix Matrix::diagSubtract(const tcvector& v) const{
+    // Matrix ret(*this); //copy
+    // for(int i = 0; i < n_unknowns; i++){
+    //     ret(i,i) = (*this)(i,i) - v[i];
+    // }
+    // return ret;
+    Matrix M(*this);	//make a copy
+	for (int u=0;u<n_unknowns;u++) M(u,u)=(*this)(u,u)-v[u];
+	return M;
 };
-Matrix Matrix::invDiagonal(){
+Matrix Matrix::invDiagonal() const{
     Matrix ret(this->n_unknowns);
     for(int i = 0; i < n_unknowns; i++){
         ret(i,i) = 1/(*this)(i,i);
@@ -156,9 +155,10 @@ Matrix Matrix::invDiagonal(){
 };
 type_calc Matrix::multiplyRow(int r, const tcvector& v) const{
     const Row<nvals>& row = rows[r];
-    type_calc sum;
+    type_calc sum = 0;
     for(int i = 0; i < nvals; i++){
         if(row.col[i]>=0) sum+=row.a[i]*v[row.col[i]];
+        else break;
     }
     return sum;
 };

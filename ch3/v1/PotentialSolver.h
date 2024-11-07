@@ -17,8 +17,8 @@ namespace vec {
         }
     }
 };
-    type_calc dot(const tcvector v, const tcvector u); //dot product in higer dimension
-    type_calc norm(const tcvector v); //norm or length in higher dimension
+    type_calc dot(const tcvector& v, const tcvector& u); //dot product in higer dimension
+    type_calc norm(const tcvector& v); //norm or length in higher dimension
 }
 
 enum SolverType{GS, PCG, QN};
@@ -81,5 +81,8 @@ private:
     /*PCG*/
     Matrix M; //inverse of Jacobi matrix
 };
+
+std::ostream& operator<<(std::ostream& out, SolverType& type);
+std::istream& operator>>(std::istream& in, SolverType& type);
 
 #endif

@@ -37,6 +37,7 @@ public:
     void scatter(type_calc3 lc, type_calc val);
     data_type gather(type_calc3 lc) const;
     void updateAverage(const Field<data_type>& other);
+    int U(int i, int j, int k) const;
 
     /*operators []*/
     std::vector<std::vector<data_type>>& operator[](int i);
@@ -207,6 +208,11 @@ void Field<data_type>::updateAverage(const Field<data_type>& other){
         }
     }
 };
+template <class data_type>
+int Field<data_type>::U(int i, int j, int k) const{
+    return k*ni*nj + j*ni + i;
+};
+
 
 
 /*operators[]*/

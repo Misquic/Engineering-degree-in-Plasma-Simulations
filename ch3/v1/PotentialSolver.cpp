@@ -1,5 +1,6 @@
 #include "PotentialSolver.h"
 #include <cmath>
+#include "funkc.h"
 
 /////////////////////////////////////// namespace vec /////////////////////////////////////////////////////
 
@@ -8,7 +9,7 @@ tcvector vec::deflate(const Field<type_calc>& f3){
     for( int i = 0; i < f3.ni; i++){
         for( int j = 0; j < f3.nj; j++){
             for(int k = 0; k < f3.nk; k++){
-                v[k*f3.ni*f3.nj + j*f3.ni + i] = f3[i][j][k];
+                v[f3.U(i,j,k)] = f3[i][j][k];
             }
         }
     }
@@ -18,21 +19,27 @@ void vec::inflate(const tcvector& v, Field<type_calc>& f3){
     for( int i = 0; i < f3.ni; i++){
         for( int j = 0; j < f3.nj; j++){
             for(int k = 0; k < f3.nk; k++){
-                f3[i][j][k] = v[k*f3.ni*f3.nj + j*f3.ni + i];
+                f3[i][j][k] = v[f3.U(i,j,k)];
             }
         }
     }
 };
 
-type_calc vec::dot(const tcvector v, const tcvector u){
-    // type_calc product{};
-    // for( int i = 0; i < v.size(); i ++){
-    //     product += v[i] * u[i];
-    // }
-    return v*u;
+type_calc vec::dot(const tcvector& v, const tcvector& u){
+    double dot = 0;
+    size_t nu = v.size();
+    for (size_t j=0;j<nu;j++)
+        dot+=v[j]*u[j];
+    return dot;
+    //return v*u;
 };
-type_calc vec::norm(const tcvector v){
-    return std::sqrt(v*v);
+type_calc vec::norm(const tcvector& v){
+    double sum = 0;
+    int nu = v.size();
+    for (int j=0;j<nu;j++)
+        sum+=v[j]*v[j];
+    return sqrt(sum/nu);
+    //return sqrt((v*v)/v.size());
 }
 
 
@@ -177,177 +184,221 @@ bool PotentialSolver::solveGS(){
 };
 
 bool PotentialSolver::solveNRPCG(){
-    const int NR_MAX_IT = 20;
-    const type_calc NR_TOL = 1e-3;
-    int n_unknowns = A.n_unknowns;
+    // const int NR_MAX_IT = 20;
+    // const type_calc NR_TOL = 1e-3;
+    // int n_unknowns = A.n_unknowns;
 
-    Matrix J(n_unknowns);
-    tcvector Q(n_unknowns);
-    tcvector y(n_unknowns);
-    tcvector x = vec::deflate(world.phi);
-    tcvector b = vec::deflate(world.rho);
+    // Matrix J(n_unknowns);
+    // tcvector Q(n_unknowns);
+    // tcvector y(n_unknowns);
+    // tcvector x = vec::deflate(world.phi);
+    // tcvector b = vec::deflate(world.rho);
 
-    for(int i = 0; i < n_unknowns; i++){
-        if(node_type[i] == NEUMANN) b[i] = 0;
-        else if(node_type[i] == DIRICHLET) b[i] = x[i];
-        else b[i] = -b[i]*inv_eps_0;
-    }
-
-    type_calc norm{};
-    bool converged = false;
-
-    for(int it = 0; it < NR_MAX_IT; it++){
-        tcvector F = A*x-b;
-
-        for(int i = 0; i < n_unknowns; i++){
-            if(node_type[i] == REGULAR){
-                F[i] -= Const::q_e*n0*exp((x[i]-phi0)/Te0)*inv_eps_0;
-            }
-        }
-
-        for(int i = 0; i < n_unknowns; i++){
-            if(node_type[i] == REGULAR){
-                Q[i] = Const::q_e*n0/(Const::eps_0*Te0)*exp((x[i]-phi0)/Te0); //TODO merge with above?
-            }
-        }
-
-        J = A.diagSubtract(Q);
-        if(!solvePCGlinear(J,y,F)){
-            solveGSlinear(J,y,F);
-        }
-        for(int i = 0; i < n_unknowns; i++){
-            if(node_type[i] == DIRICHLET) y[i] = 0;
-        }
-        x = x-y;
-        norm = vec::norm(y);
-        if(norm<NR_TOL){
-            converged = true;
-            break;
-        }
-    }
-
-    if(!converged){
-        std::cerr << "NR+PCG failed to converge, norm = " << norm << " tolerance = " << NR_TOL << " time step = " << world.getTs() << std::endl;
-    }
-    //std::cerr << "Iterations made: " << it << " norm = " << norm << std::endl; 
-    vec::inflate(x, world.phi);
-    return converged;
-
-    // /*main NR iteration loop*/
-	// const int NR_MAX_IT=20;		/*maximum number of NR iterations*/
-	// const double NR_TOL = 1e-3;
-	// int n_unknowns = A.n_unknowns;
-
-	// Matrix J(n_unknowns);
-	// tcvector P(n_unknowns);
-	// tcvector y(n_unknowns);
-	// tcvector x = vec::deflate(world.phi);
-	// tcvector b = vec::deflate(world.rho);
-
-	// /*set RHS to zero on boundary nodes (zero electric field)
-    //   and to existing potential on fixed nodes */
-    // for (int u=0;u<n_unknowns;u++)
-    // {
-	// 	if (node_type[u]==NEUMANN) b[u] = 0;			/*neumann boundary*/
-    //     else if (node_type[u]==DIRICHLET) b[u] = x[u];	/*dirichlet boundary*/
-    //     else b[u] = -b[u]/Const::eps_0;            /*regular node*/
+    // for(int i = 0; i < n_unknowns; i++){
+    //     if(node_type[i] == NEUMANN) b[i] = 0;
+    //     else if(node_type[i] == DIRICHLET) b[i] = x[i];
+    //     else b[i] = -b[i]*inv_eps_0;
     // }
 
-	// double norm;
-	// bool converged=false;
-	// for(int it=0;it<NR_MAX_IT;it++)
-	// {
-	// 	/*compute F by first subtracting the linear term */
-	// 	tcvector F = A*x-b;
+    // type_calc norm{};
+    // bool converged = false;
 
-	// 	/*subtract b(x) on regular nodes*/
-	// 	for (int n=0;n<n_unknowns;n++)
-	// 		if (node_type[n]==REGULAR)	/*regular nodes*/
-	// 			F[n] -= Const::q_e*n0*exp((x[n]-phi0)/Te0)/Const::eps_0;
+    // for(int it = 0; it < NR_MAX_IT; it++){
+    //     tcvector F = A*x-b;
 
-	// 	/*Compute P, diagonal of d(bx)/dphi*/
-	// 	for (int n=0;n<n_unknowns;n++)
-	// 	{
-	// 		if (node_type[n]==REGULAR)
-	// 			P[n] = n0*Const::q_e/(Const::eps_0*Te0)*exp((x[n]-phi0)/Te0);
-	// 	}
+    //     for(int i = 0; i < n_unknowns; i++){
+    //         if(node_type[i] == REGULAR){
+    //             F[i] -= Const::q_e*n0*exp((x[i]-phi0)/Te0)*inv_eps_0;
+    //         }
+    //     }
+    //     for(int i = 0; i < n_unknowns; i++){
+    //         if(node_type[i] == REGULAR){
+    //             Q[i] = Const::q_e*n0/(Const::eps_0*Te0)*exp((x[i]-phi0)/Te0); //TODO merge with above?
+    //         }
+    //     }
 
-	// 	/*Compute J = A-diag(P)*/
-	// 	Matrix J = A.diagSubtract(P);
+    //     J = A.diagSubtract(Q);
+    //     if(!solvePCGlinear(J,y,F)){
+    //         solveGSlinear(J,y,F);
+    //     }
+    //     for(int i = 0; i < n_unknowns; i++){
+    //         if(node_type[i] == DIRICHLET) y[i] = 0;
+    //     }
+    //     x = x-y;
+    //     norm = vec::norm(y);
+    //     if(norm<NR_TOL){
+    //         converged = true;
+    //         break;
+    //     }
+    // }
 
-	// 	/*solve Jy=F*/
-	// 	if (!solvePCGlinear(J,y,F))
-	// 		solveGSlinear(J,y,F);
+    // if(!converged){
+    //     std::cerr << "NR+PCG failed to converge, norm = " << norm << " tolerance = " << NR_TOL << " time step = " << world.getTs() << std::endl;
+    // }
+    // //std::cerr << "Iterations made: " << it << " norm = " << norm << std::endl; 
+    // vec::inflate(x, world.phi);
+    // return converged;
+    /*main NR iteration loop*/
+	const int NR_MAX_IT=20;		/*maximum number of NR iterations*/
+	const double NR_TOL = 1e-3;
+	int nu = A.n_unknowns;
 
-	// 	/*clear any n_unknowsmerical noise on Dirichlet nodes*/
-	// 	for (int u=0;u<n_unknowns;u++)
-	// 		if (node_type[u]==DIRICHLET) y[u]=0;
+	Matrix J(nu);
+	tcvector P(nu);
+	tcvector y(nu);
+	tcvector x = vec::deflate(world.phi);
+	tcvector b = vec::deflate(world.rho);
 
-	// 	/*x=x-y*/
-	// 	x = x-y;
+	/*set RHS to zero on boundary nodes (zero electric field)
+      and to existing potential on fixed nodes */
+    for (int u=0;u<nu;u++)
+    {
+		if (node_type[u]==NEUMANN) b[u] = 0;			/*neumann boundary*/
+        else if (node_type[u]==DIRICHLET) b[u] = x[u];	/*dirichlet boundary*/
+        else b[u] = -b[u]/Const::eps_0;            /*regular node*/
+    }
 
-	// 	norm=vec::norm(y);
-	// 	//cout<<"NR norm: "<<norm<<endl;
+	double norm;
+	bool converged=false;
+	for(int it=0;it<NR_MAX_IT;it++)
+	{
+		/*compute F by first subtracting the linear term */
+		tcvector F = A*x-b;
 
-	// 	if (norm<NR_TOL)
-	// 	{
-	// 		converged=true;
-	// 		break;
-	// 	}
-	// }
+		/*subtract b(x) on regular nodes*/
+		for (int n=0;n<nu;n++)
+			if (node_type[n]==REGULAR)	/*regular nodes*/
+				F[n] -= Const::q_e*n0*exp((x[n]-phi0)/Te0)/Const::eps_0;
 
-	// if (!converged)
-	// 	std::cout<<"NR+PCG failed to converge, norm = "<<norm<<std::endl;
+		/*Compute P, diagonal of d(bx)/dphi*/
+		for (int n=0;n<nu;n++)
+		{
+			if (node_type[n]==REGULAR)
+				P[n] = n0*Const::q_e/(Const::eps_0*Te0)*exp((x[n]-phi0)/Te0);
+		}
 
-	// /*convert to 3d data*/
-	// vec::inflate(x,world.phi);
-	// return converged;
+		/*Compute J = A-diag(P)*/
+		Matrix J = A.diagSubtract(P);
+
+		/*solve Jy=F*/
+		if (!solvePCGlinear(J,y,F))
+			solveGSlinear(J,y,F);
+
+		/*clear any numerical noise on Dirichlet nodes*/
+		for (int u=0;u<nu;u++)
+			if (node_type[u]==DIRICHLET) y[u]=0;
+
+		/*x=x-y*/
+		x = x-y;
+
+		norm=vec::norm(y);
+		//cout<<"NR norm: "<<norm<<endl;
+
+		if (norm<NR_TOL)
+		{
+			converged=true;
+			break;
+		}
+	}
+
+	if (!converged)
+		std::cout<<"NR+PCG failed to converge, norm = "<<norm<<std::endl;
+
+	/*convert to 3d data*/
+	vec::inflate(x,world.phi);
+	return converged;
 };
 bool PotentialSolver::solvePCGlinear(const Matrix& A, tcvector& x, const tcvector& b){
-    bool converged = false;
-    tcvector g = A*x-b;
-    tcvector s = M*g;
-    tcvector d = -1*s;
-    type_calc L2{};
+    // bool converged = false;
+    // tcvector tmp = A*x; 
+    // tcvector g = A*x-b; //
+    // for(int i = 0; i < A.n_unknowns; i ++){
+    //     if(std::isnan(tmp[i]) || std::isnan(x[i]) || std::isnan(b[i])){
+    //         std::cout << " " << (A*x)[i] << " " << x[i] << " " << b[i] << " " << g[i];
+    //         std::cout  << " " << i << " " << world.getTs() << "\n";
+    //         throw(std::invalid_argument("PCG problem"));
+    //     }
+    // }
+    // tcvector s = M*g; //
+    // tcvector d = -1*s; //
+    // type_calc L2{};
+    // //Matrix M = A.invDiagonal();
 
-    for(unsigned it = 0; it < max_solver_it; it ++){
-        tcvector z = A*d;
-        type_calc alpha = g*s;
-        type_calc beta = d*z;
+    // for(unsigned it = 0; it < max_solver_it; it ++){
+    //     tcvector z = A*d;//
+    //     type_calc alpha = g*s;
+    //     type_calc beta = d*z; //
 
-        x = x + (alpha/beta)*d;
-        g = g + (alpha/beta)*z;
-        s = M*g;
 
-        beta = alpha;
-        alpha = g*s;
+    //     x = x + (alpha/beta)*d;
+    //     g = g + (alpha/beta)*z;
+    //     s = M*g;
 
-        d = (alpha/beta)*d - s;
-        L2 = vec::norm(g);
+    //     beta = alpha;
+    //     alpha = g*s;
+    //     // tu gdzieś dochodzi do nan
+    //     d = (alpha/beta)*d - s;
+    //     L2 = vec::norm(g);
         
-        if(L2 < tolerance){
-            converged = true;
-            break;
-        }
-    }    
+    //     if(L2 < tolerance){
+    //         converged = true;
+    //         break;
+    //     }
+    // }    
 
-    if(!converged){
-        std::cerr << "PCGlinear failed to converge, L2 = " << L2 << " tolerance = " << tolerance << " time step = " << world.getTs() << std::endl;
-    }
-    //std::cerr << "Iterations made: " << it << " L2 = " << L2 << std::endl; 
+    // if(!converged){
+    //     std::cerr << "PCGlinear failed to converge, norm(g) = " << L2 << " tolerance = " << tolerance << " time step = " << world.getTs() << std::endl;
+    //     //std::cout  << "\n" << " g: " << g << std::endl;
+    // }
+    // //std::cerr << "Iterations made: " << it << " L2 = " << L2 << std::endl; 
+    // return converged;
+
+    bool converged= false;
+
+	double l2 = 0;
+	Matrix M = A.invDiagonal(); //inverse of Jacobi preconditioner
+
+	/*initialization*/
+	tcvector g = A*x-b;
+	tcvector s = M*g;
+	tcvector d = -1*s;
+
+	for (unsigned it=0;it<max_solver_it;it++)
+	{
+		tcvector z = A*d;
+		double alpha = vec::dot(g,s);
+		double beta = vec::dot(d,z);
+
+		x = x+(alpha/beta)*d;
+		g = g+(alpha/beta)*z;
+		s = M*g;
+
+		beta = alpha;
+		alpha = vec::dot(g,s);
+
+		d = (alpha/beta)*d-s;
+		l2 = vec::norm(g);
+		if (l2<tolerance) {converged=true;break;}
+	}
+
+	if (!converged)	std::cerr<<"PCG failed to converge, norm(g) = "<<l2<<std::endl;
     return converged;
+
 }
 //////////////////// AAAAAAAAAAAAAAAAAAAAAAAA //////////////////////
 //////////////////// AAAAAAAAAAAAAAAAAAAAAAAA //////////////////////
 bool PotentialSolver::solveGSlinear(const Matrix &A, tcvector& x, const tcvector& b){
     type_calc L2{};
-    bool converged = false;
+    bool converged = false; //sprawdzic x czy jest nan 
 
     for(int it = 0; it < max_solver_it; it++){
         for(int i = 0; i < A.n_unknowns; i++){
-            type_calc S = A.multiplyRow(i,x) - A(i,i)*x[i];
+
+            type_calc S = A.multiplyRow(i,x) - A(i,i)*x[i]; //tu coś nie tak?
             type_calc phi_new = (b[i] - S)/A(i,i);
-            x[i] = x[i] + 1.0 * (phi_new - x[i]) ;//change 1.0 to SOR_WEIGHT?
+            
+            x[i] = x[i] + 1.0 * (phi_new - x[i]) ;//change 1.0 to SOR_WEIGHT? //czy tu sie robi nan?
+           
         }
         if(it%25 == 0){
             tcvector R = A*x-b;
@@ -436,62 +487,115 @@ void PotentialSolver::setReferenceValues(type_calc phi0, type_calc n0, type_calc
     this->Te0 = Te0;
 };
 void PotentialSolver::buildMatrix(){
-    node_type = std::vector<int>(A.n_unknowns);
-    //node_type.reserve(A.n_unknowns);
+    // node_type = std::vector<int>(A.n_unknowns);
+    // //node_type.reserve(A.n_unknowns);
 
-    for(int k = 0; k < world.nk; k++){ //why indexex running in reverse?
-        for(int j = 0; j < world.nj; j++){
-            for(int i = 0; i < world.ni; i++){
-                int u = k*world.nj*world.ni + j*world.ni + i;
+    // for(int k = 0; k < world.nk; k++){ //why indexex running in reverse?
+    //     for(int j = 0; j < world.nj; j++){
+    //         for(int i = 0; i < world.ni; i++){
+    //             int u = k*world.nj*world.ni + j*world.ni + i;
+    //             A.clearRow(u);
+
+    //             if(world.object_id[i][j][k] > 0){
+    //                 A(u,u) = 1;
+    //                 node_type[u] = DIRICHLET;
+    //                 continue;
+    //             }
+                
+    //             node_type[u] = NEUMANN;
+    //             if(i == 0){
+    //                 A(u,u) = inv_dx;
+    //                 A(u,u+1) = -inv_dx;
+    //             }
+    //             else if(i == world.ni-1){
+    //                 A(u,u) = inv_dx;
+    //                 A(u,u-1) = -inv_dx;
+    //             }
+    //             else if(j == 0){
+    //                 A(u,u) = inv_dy;
+    //                 A(u,u+world.ni) = -inv_dy;
+    //             }
+    //             else if(j == world.nj -1){
+    //                 A(u,u) = inv_dy;
+    //                 A(u,u-world.ni) = -inv_dy;
+    //             }
+    //             else if(k == 0){
+    //                 A(u,u) = inv_dz;
+    //                 A(u,u+world.nj*world.ni) = -inv_dz;
+    //             }
+    //             else if(k == world.nk -1){
+    //                 A(u,u) = inv_dz;
+    //                 A(u,u-world.nj*world.ni) = -inv_dz;
+    //             }
+    //             else{
+    //                 node_type[u] = REGULAR;
+    //                 A(u,u-world.ni*world.nj) = inv_d2x;
+    //                 A(u,u-world.ni) = inv_d2y;
+    //                 A(u,u-1) = inv_d2z;
+    //                 A(u,u) = -twos_over_invs;
+    //                 A(u,u+1) = inv_d2z;
+    //                 A(u,u+world.ni) = inv_d2y;
+    //                 A(u,u+world.ni*world.nj) = inv_d2x;
+    //             }
+    //         }
+    //     }
+    // }
+    // // precalculate M, inverse of Jacobi matrix
+    // vec::inflate(node_type, world.node_type);
+    // M = A.invDiagonal();
+    double3 dh = world.getDx();
+	double idx = 1.0/dh[0];
+	double idy = 1.0/dh[1];
+	double idz = 1.0/dh[2];
+    double idx2 = idx*idx;	/*1/(dx*dx)*/
+	double idy2 = idy*idy;
+	double idz2 = idz*idz;
+	int ni = world.ni;
+	int nj = world.nj;
+	int nk = world.nk;
+	int nu = ni*nj*nk;
+
+	/*reserve space for node types*/
+	node_type.reserve(nu);
+
+	/*solve potential*/
+	for (int k=0;k<nk;k++)
+        for (int j=0;j<nj;j++)
+        	for (int i=0;i<ni;i++)
+            {
+                int u = world.phi.U(i,j,k);
                 A.clearRow(u);
-
-                if(world.object_id[i][j][k] > 0){
-                    A(u,u) = 1;
+                //dirichlet node?
+				if (world.object_id[i][j][k]>0)
+                {
+                    A(u,u)=1;	//set 1 on the diagonal
                     node_type[u] = DIRICHLET;
                     continue;
                 }
-                
-                node_type[u] = NEUMANN;
-                if(i == 0){
-                    A(u,u) = inv_dx;
-                    A(u,u+1) = -inv_dx;
-                }
-                else if(i == world.ni-1){
-                    A(u,u) = inv_dx;
-                    A(u,u-1) = -inv_dx;
-                }
-                else if(j == 0){
-                    A(u,u) = inv_dy;
-                    A(u,u+world.ni) = -inv_dy;
-                }
-                else if(j == world.nj -1){
-                    A(u,u) = inv_dy;
-                    A(u,u-world.ni) = -inv_dy;
-                }
-                else if(k == 0){
-                    A(u,u) = inv_dz;
-                    A(u,u+world.nj*world.ni) = -inv_dz;
-                }
-                else if(k == world.nk -1){
-                    A(u,u) = inv_dz;
-                    A(u,u-1) = -inv_dz;
-                }
-                else{
-                    node_type[u] = REGULAR;
-                    A(u,u-world.ni*world.nj) = inv_d2x;
-                    A(u,u-world.ni) = inv_d2y;
-                    A(u,u-1) = inv_d2z;
-                    A(u,u) = -twos_over_invs;
-                    A(u,u+1) = inv_d2z;
-                    A(u,u+world.ni) = inv_d2y;
-                    A(u,u+world.ni*world.nj) = inv_d2x;
+
+				//Neumann boundaries
+				node_type[u] = NEUMANN;		//set default
+                if (i==0) {A(u,u)=idx;A(u,u+1)=-idx;}
+                else if (i==ni-1) {A(u,u)=idx;A(u,u-1)=-idx;}
+                else if (j==0) {A(u,u)=idy;A(u,u+ni)=-idy;}
+                else if (j==nj-1) {A(u,u)=idy;A(u,u-ni)=-idy;}
+                else if (k==0) {A(u,u)=idz;A(u,u+ni*nj)=-idz;}
+				else if (k==nk-1) {
+					A(u,u)=idz;
+					A(u,u-ni*nj)=-idz;}
+                else {
+                	//standard internal stencil
+                	A(u,u-ni*nj) = idz2;
+                	A(u,u-ni) = idy2;
+                	A(u,u-1) = idx2;
+                	A(u,u) = -2.0*(idx2+idy2+idz2);
+                	A(u,u+1) = idx2;
+                	A(u,u+ni) = idy2;
+                	A(u,u+ni*nj) = idz2;
+                	node_type[u] = REGULAR;	//regular internal node
                 }
             }
-        }
-    }
-    // precalculate M, inverse of Jacobi matrix
-    vec::inflate(node_type, world.node_type);
-    M = A.invDiagonal();
+	//solveQN();
 };
 
 void PotentialSolver::precalculate(){
@@ -513,4 +617,40 @@ void PotentialSolver::precalculate(){
     inv_dz = 1.0/dx[2];
     /*PCG*/
 }
+
+std::ostream& operator<<(std::ostream& out, SolverType& type){
+    switch(type){
+    case SolverType::GS:
+        out << "GS";
+        break;
+    case SolverType::PCG:
+        out << "PCG";
+        break;
+    case SolverType::QN:
+        out << "QN";
+        break;
+    default:
+        break;
+    }
+    return out;
+};
+
+std::istream& operator>>(std::istream& in, SolverType& type){
+    std::string input;
+    in >> input;
+
+    if (input == "GS") {
+        type = SolverType::GS;
+    } else if (input == "PCG") {
+        type = SolverType::PCG;
+    } else if (input == "QN") {
+        type = SolverType::QN;
+    } else {
+        throw(std::invalid_argument("Wrong Solver Type, setting SolverType::GS"));
+        type = GS;  // DEFAULT
+    }
+
+    return in;
+
+};
 

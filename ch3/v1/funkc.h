@@ -14,6 +14,17 @@
 #include <regex>
 #include "all.h"
 
+template <typename T>
+T parseArgument(const std::vector<std::string>& args, const std::string& option, T defaultValue) {
+    for (size_t i = 0; i < args.size(); ++i) {
+        if (args[i] == option && i + 1 < args.size()) {
+            std::istringstream iss(args[i + 1]);
+            T value;
+            if (iss >> value) return value;
+        }
+    }
+    return defaultValue;
+}
 
 double parseExpression(const std::string& expression);
 std::string lower(std::string& str);
@@ -113,6 +124,17 @@ void read_value_and_check_type(T& value){
     std::cin.clear();
 }
 
+template<class data_type>
+std::ostream& operator<<(std::ostream& out, std::vector<data_type>& vec){
+    size_t size = vec.size();
+    for(int i = 0; i < size; i ++){
+        out << vec[i];
+        if(i!=size-1){
+            out << ", ";
+        }
+    }
+    return out;
+}
 
 
 
