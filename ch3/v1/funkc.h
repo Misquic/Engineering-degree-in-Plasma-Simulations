@@ -17,7 +17,7 @@
 void print_help();
 
 template <typename T>
-T parseArgument(const std::vector<std::string>& args, const std::string& option, T defaultValue) {
+T parseArgument(const std::vector<std::string>& args, const std::string& option, T defaultValue) { //to check if command occurs and to read passed value if it is
     for (size_t i = 0; i < args.size(); ++i) {
         if (args[i] == option && i + 1 < args.size()) {
             std::istringstream iss(args[i + 1]);
@@ -28,9 +28,10 @@ T parseArgument(const std::vector<std::string>& args, const std::string& option,
     return defaultValue;
 }
 
-double parseExpression(const std::string& expression);
+bool parseArgument(const std::vector<std::string>& args, const std::string& option);//to chceck if command occurs
+double parseExpression(const std::string& expression); // to read constans like eps_0 from string
 std::string lower(std::string& str);
-void read_value_and_check_type(std::string& value);
+void read_value_and_check_type(std::string& value); //for instantiator
 
 
 

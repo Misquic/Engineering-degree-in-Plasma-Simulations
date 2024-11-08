@@ -36,7 +36,7 @@ protected:
     type_calc Te0 = 1;        //reference electron temperature for boltzman relationship
     const type_calc SOR_weight = 1.4;
     
-    /*PCG*/
+    /*NRPCG*/
     Matrix A;
 
     enum             NodeType{REGULAR, NEUMANN, DIRICHLET};  //enum for node types
@@ -68,7 +68,7 @@ private:
     type_calc  inv_d2y;
     type_calc  inv_d2z;
     type_calc  inv_eps_0;
-    type_calc  twos_over_invs;
+    type_calc  twos_over_inv_d2;
     type_calc  inv_twos_over_inv;
     /*electic field*/
     type_calc  inv_2dx;

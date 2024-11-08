@@ -15,8 +15,8 @@
 //tags: flow aroung a shape(sphere), shape inside, inlet, neuman elsewhere, Maxwellian velocity distribution//
 
 int main(int argc, char* argv[] ){
-
-    if(argc > 1 && std::string(argv[1]) == "--help"){
+    std::vector<std::string> args(argv + 1, argv+argc); // passing pointers to argv values
+    if(parseArgument(args, "--help") || parseArgument(args, "--h")){
         print_help();
         return 0;
     }
@@ -26,7 +26,7 @@ int main(int argc, char* argv[] ){
     std::unique_ptr<PotentialSolver> solver_ptr;
     std::unique_ptr<World> world_ptr;
 
-    if(argc > 1 && std::string(argv[1]) == "g"){
+    if(parseArgument(args, "--i")){
         //doesn't support Objects yet
         //TODO trash it? command line arguments are usable and better, but Instatniator might be better for future UI?
         Instantiator instantiator(world_ptr, species, solver_ptr);
@@ -35,20 +35,20 @@ int main(int argc, char* argv[] ){
     }
     else{
         std::cout << "Running without Instatniator, you can use program arguments: --s_type --s_max_it --sphere_phi \n\n";
-        // Instantiate World
-        world_ptr = std::make_unique<World>(21, 21, 41, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.4});
-        world_ptr->setTime(1e-7, 400);
-
         //read arguments
-        std::vector<std::string> args(argv + 1, argv+argc); // passing pointers to argv values
         SolverType solver_type = parseArgument(args, "--s_type", PCG);
         int solver_max_it = parseArgument(args, "--s_max_it", 1000); //or 2e4;
         type_calc phi_sphere = parseArgument(args, "--sphere_phi", -100.0);
 
-	    std::cout << "Solver Type: " << solver_type << "\n";
+        std::cout << "Solver Type: " << solver_type << "\n";
 	    std::cout << "Solver max iterations: " << solver_max_it <<"\n";
 	    std::cout << "Sphere potential: " << phi_sphere << " V" << std::endl;
         
+        // Instantiate World
+        world_ptr = std::make_unique<World>(21, 21, 41, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.4});
+        world_ptr ->setTimeStart();
+        world_ptr->setTime(1e-7, 400);
+
         // Instantiate sphere
         world_ptr->addObject<Sphere>(type_calc3(0, 0, 0.15), phi_sphere, 0.05);
         //world_ptr->addObject<Rectangle>(type_calc3(0, 0, 0.15), phi_sphere, type_calc3(0.1, 0.07, 0.2), type_calc3(1, 1, 1));
@@ -80,12 +80,12 @@ int main(int argc, char* argv[] ){
 
     // Instantiate solver
 
-    Output::fields(*world_ptr, species);
+    //Output::fields(*world_ptr, species);
     solver_ptr->solve();
     solver_ptr->computeEF();
-    Output::fields(*world_ptr, species);
+    //Output::fields(*world_ptr, species);
 
-    world_ptr->setTimeStart();
+    //world_ptr->setTimeStart();
     while(world_ptr->advanceTime()){
 
         for(ColdBeamSource& source: sources){
@@ -106,12 +106,12 @@ int main(int argc, char* argv[] ){
             }
         }
 
-        //Output::diagOutput(*world_ptr, species);
+        Output::diagOutput(*world_ptr, species);
         Output::screenOutput(*world_ptr, species);
         int ts = world_ptr->getTs();
-        if(ts%20 == 0 || world_ptr->isLastTimeStep()){ //|| (ts > 140 && ts < 160)){
+        if(ts%50 == 0 || world_ptr->isLastTimeStep()){ //|| (ts > 140 && ts < 160)){
             Output::fields(*world_ptr, species);
-            std::cout << "Time taken so far: " << world_ptr->getWallTime() << std::endl;
+            //std::cout << "Time taken so far: " << world_ptr->getWallTime() << std::endl;
         }
        
     }

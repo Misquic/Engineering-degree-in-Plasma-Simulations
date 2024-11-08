@@ -8,8 +8,18 @@ void print_help(){
               << std::left << std::setw(w) <<  "--s_type: " << "set Solver Type: GS, PCG, QN(not implemented yet)\n\t"
               << std::left << std::setw(w) << "--s_max_it: " << "set Solver maximum number of iterations\n\t"  
               << std::left << std::setw(w) << "--sphere_phi: " << "set Sphere phi\n\t"
+              << std::left << std::setw(w) << "--i: " << "use Instantiator(currently not working), other commands will be dissmised\n\t"
               << "\n";  
 };
+
+bool parseArgument(const std::vector<std::string>& args, const std::string& option) { //to chceck if command occurs
+    for (size_t i = 0; i < args.size(); ++i) {
+        if (args[i] == option) {
+            return true;
+        }
+    }
+    return false;
+}
 
 
 std::map<std::string, double> constants = {

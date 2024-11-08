@@ -2,7 +2,7 @@
 
 /*constructors*/
 Rnd::Rnd(): mt_gen{std::random_device()()}, rnd_dist{0.0, 1.0} { //[0, 1.o)
-//Rnd::Rnd(): mt_gen{100}, rnd_dist{0.0, 1.0} { //[0, 1.o)
+// Rnd::Rnd(): mt_gen{100}, rnd_dist{0.0, 1.0} { //[0, 1.o) //seed 3 for convergence //100 for explosion (different computers different results)
 };
 Rnd::Rnd(unsigned seed): mt_gen{seed}, rnd_dist{0.0, 1.0} { //[0, 1.o)
 };
