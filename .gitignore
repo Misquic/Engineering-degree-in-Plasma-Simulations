@@ -6,7 +6,6 @@
 #files with data
 *.vti
 *.csv
-*.mp4
 
 #files for testing
 test.cpp
@@ -24,9 +23,6 @@ send/
 #folders with data for debugging
 results_old/
 results_debug/
-
-#folders with ParaView results
-animations/
 
 #folders with vscode config
 .vscode/
