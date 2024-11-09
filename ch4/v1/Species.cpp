@@ -34,12 +34,38 @@ void Species::advance(){
         type_calc3 ef_part = world.ef.gather(lc);
 
         part_ptr->vel += ef_part*(dt*charge/mass); /////////////////////////////save
-        part_ptr->pos += part_ptr->vel * dt;
 
-        if(world.inObject(part_ptr->pos) || !world.inBounds(part_ptr->pos)){
-            particles[p] = std::move(particles[np-1]); //use std::move? this would result in problem with pointer?
-            np--;
-            p--;
+        type_calc t_reminding = 1;
+        int n_bounces = 0;
+
+        while(t_reminding > 0){
+            if(++n_bounces > 20) {
+                particles[p] = std::move(particles[np-1]); //use std::move? this would result in problem with pointer?
+                np--;
+                p--;
+                break;
+            }
+
+            type_calc3 pos_old = part_ptr->pos;
+            part_ptr->pos += part_ptr->vel*t_reminding*dt;
+            int in_object = world.inObject(part_ptr->pos);
+
+            if(!world.inBounds(part_ptr->pos)){
+                particles[p] = std::move(particles[np-1]);
+                np--;
+                p--;
+                break;
+            }
+            else if(in_object){
+                type_calc tp;
+                type_calc3 n; //normal vector to the surface at the point of intersection
+                world.lineIntersect(pos_old, part_ptr->pos, in_object, tp, part_ptr->pos, n); // passing tp, pos, n so it overwrites them to correct values, in stead of returning tuple
+                //part_ptr->vel = sampleReflectedVelocity(part_ptr->pos, part_ptr->vel.length(), n); 
+                t_reminding *= (1-tp);
+                continue;
+            }
+            
+            t_reminding = 0;
         }
     }
     particles.erase(particles.begin() + np, particles.end());

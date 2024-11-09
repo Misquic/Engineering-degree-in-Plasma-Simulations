@@ -2,6 +2,7 @@
 #define WORLD_H
 #include <chrono>
 #include <memory>
+#include <tuple>
 #include "all.h"
 #include "Field.h"
 #include "Vec3.h"
@@ -80,7 +81,8 @@ public:
 
     /*Objects*/
     void computeObjectID();
-    bool inObject(const type_calc3& pos) const;
+    int inObject(const type_calc3& pos) const; // returns index of object pos is in, starting from 1, 0 means pos isn't in any object!!!
+    void lineIntersect(const type_calc3& x1, const type_calc3& x2, const int in_object, type_calc& tp, type_calc3& intersection_point, type_calc3& n) const; //change it so it takes references of values in stead of returning tuple?
     template<class T, class... Args>
     void addObject(Args&&... args);
     std::string printObjects()const;

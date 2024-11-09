@@ -14,8 +14,26 @@
 #include "Rnd.h"
 
 //tags: flow aroung a shape(sphere), shape inside, inlet, neuman elsewhere, Maxwellian velocity distribution//
-
 int main(int argc, char* argv[] ){
+
+    // World world(21, 21, 41, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.4});
+    // world.addObject<Rectangle>(type_calc3(0, 0, 0), -100,type_calc3{0.1, 0.2, 0.3});
+    // // world.addObject<Sphere>(type_calc3(0, 0, 0.15), -100, 0.05);
+
+    // type_calc3 x1{0.2, -0.39, -0.6}, x2{0.0, 0.0, 0.0};
+    // type_calc tp{};
+    // type_calc3 n{};
+    // type_calc3 x3{};
+    // if(world.inObject(x2) &&  !world.inObject(x1)){
+    //     world.lineIntersect(x1, x2, 1, tp, x3, n);
+    // }
+    
+
+    // std::cout << "tp: " << tp << "\n";
+    // std::cout << std::setw(0) << x1 << " " << x2 << " "  << x3 << " " << n << "\n";
+
+    // return 0;
+
 
     std::vector<std::string> args(argv + 1, argv+argc); // passing pointers to argv values
     if(parseArgument(args, "--help") || parseArgument(args, "--h")){

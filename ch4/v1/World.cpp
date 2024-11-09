@@ -234,12 +234,20 @@ void World::computeObjectID(){
         }
     }
 };
-bool World::inObject(const type_calc3& pos) const{
+int World::inObject(const type_calc3& pos) const{
+    // return index of object which pos is in +1 so 0 is for when it isnt in any object
+    int i = 1;
     for(const std::shared_ptr<Object>& obj_ptr: objects){
-        if(obj_ptr->inObject(pos)) return true;
+        if(obj_ptr->inObject(pos)) return i;
+        i++;
     }
-    return false;
+    return 0;
 };
+void World::lineIntersect(const type_calc3& x1, const type_calc3& x2, const int in_object, type_calc& tp, type_calc3& intersection_point, type_calc3& n) const{ //in_object starts from 1!
+    objects[in_object-1]->lineIntersect(x1, x2, tp, intersection_point, n);
+};
+
+
 std::string World::printObjects()const{
     std::stringstream ss;
     for(const std::shared_ptr<Object>& obj_ptr: objects){
