@@ -1,6 +1,6 @@
 #ifndef OBJECT_H
 #define OBJECT_H
-#include <ostream>
+#include <iostream>
 #include <string>
 #include "all.h"
 #include "Vec3.h"
@@ -47,7 +47,10 @@ public:
     bool isMovable() noexcept;
     // virtual std::ostream print();
     virtual void print(std::ostream& out) const;
+
+    //booklike
     virtual bool inObject(type_calc3 x) const = 0;
+    virtual type_calc lineIntersect(const type_calc3& x1, const type_calc3& x2) const = 0;
 
     friend std::ostream& operator<<(std::ostream& out, const Object& obj);
     friend class Objects;
@@ -78,6 +81,8 @@ public:
 
     virtual void print(std::ostream& out) const override;
     virtual bool inObject(type_calc3 x) const override;
+    virtual type_calc lineIntersect(const type_calc3& x1, const type_calc3& x2) const override;
+
 
     friend std::ostream& operator<<(std::ostream& out, Sphere obj);
 };
@@ -90,6 +95,7 @@ protected:
     type_calc3 sides; // side sizes
     type_calc3 half_sides;
     type_calc3 orientation;
+    type_calc3 x_min, x_max; // position of minimum vertex, position of maximum vertex
 public:
     /*constructors*/
     Rectangle(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc3 sides, type_calc3 orientation);
@@ -108,6 +114,7 @@ public:
 
     virtual void print(std::ostream& out) const override;
     virtual bool inObject(type_calc3 x) const override;
+    type_calc lineIntersect(const type_calc3& x1, const type_calc3& x2) const;
 
     friend std::ostream& operator<<(std::ostream& out, Rectangle obj);
 

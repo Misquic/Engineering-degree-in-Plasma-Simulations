@@ -29,7 +29,7 @@ protected:
     const SolverType solver_type;   //type of used solver
 
     /*GS*/
-    unsigned  max_solver_it;  //maximum number of solver iterations
+    unsigned  PCG_max_solver_it;  //maximum number of solver iterations
     unsigned  GS_max_solver_it;  //maximum number of solver iterations
     type_calc tolerance;      //tolerance used for convergence check
     type_calc phi0 = 0;       //reference phi for boltzman relationship
@@ -59,6 +59,10 @@ public:
     void computeEF();                                                      // computes electric field = -gradieng(phi)
     void setReferenceValues(type_calc phi0, type_calc n0, type_calc Te0);
     void buildMatrix();
+
+    unsigned get_GS_max_it();
+    unsigned get_PCG_max_it();
+
 
 private:
     void precalculate();

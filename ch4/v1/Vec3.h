@@ -27,8 +27,10 @@ public:
 
     /*methods*/
     void clear();
-    type_calc length();
-    void normalise();
+    type_calc length() const; //mag
+    void normalise(); //
+    Vec3<data_type> unit() const;
+    Vec3<data_type> cross(const Vec3<data_type>& other) const;
 
     /*operators[]*/
     data_type& operator[](int i);
@@ -50,7 +52,7 @@ public:
     Vec3<data_type>& operator=(Vec3<data_type>&& other) noexcept;       //moving operator
     Vec3<data_type> operator+(const Vec3<data_type>& other) const;
     Vec3<data_type> operator-(const Vec3<data_type>& other) const;
-    data_type       operator*(const Vec3<data_type>& other) const;  //point multiplication
+    data_type       operator*(const Vec3<data_type>& other) const;  //dot multiplication
     Vec3<data_type> operator/(const Vec3<data_type>& other) const;  //elementwise division
     void operator+=(const Vec3<data_type>& other);
     void operator-=(const Vec3<data_type>& other);
@@ -86,16 +88,25 @@ void Vec3<data_type>::clear(){
     }
 };
 template <class data_type>
-type_calc Vec3<data_type>::length(){
+type_calc Vec3<data_type>::length() const{
     return std::sqrt((*this)*(*this));
 };
 template <class data_type>
 void Vec3<data_type>::normalise(){
     (*this)/=(*this).length();
 };
-
-
-
+template <class data_type>
+Vec3<data_type> Vec3<data_type>::unit() const{
+    type_calc l = length();
+    if(l){
+    return Vec3<data_type>( (*this)/l );
+    }
+    return Vec3<data_type>( {0,0,0} );
+};
+template <class data_type>
+Vec3<data_type> Vec3<data_type>::cross(const Vec3<data_type>& other) const{
+    return Vec3<data_type>( data[1]*other.data[2] - data[2]*other.data[1] , data[2]*other.data[0] - data[0]*other.data[2] , data[0]*other.data[1] - data[1]*other.data[0] );
+};
 
 /*operators[]*/
 template <class data_type>
@@ -286,16 +297,15 @@ Vec3<data_type> operator/(const val_name& val, const Vec3<data_type>& vec3) {
 
 /*functions*/
 template <class data_type>
-std::ostream& operator<<(std::ostream &out, const Vec3<data_type> &vec3){
-
-    //out << std::setprecision(5);// <<"{ "; /*to change?*/
+std::ostream& operator<<(std::ostream& out, const Vec3<data_type>& vec3){
     out << std::setw(5) << vec3[0] << " " << std::setw(5) << vec3[1] << " " << std::setw(5) << vec3[2];
-    // for(int i=0; i<3; i++){
-    //     out << vec3[i] << " ";
-    // }
-    // out;// << "}";
     return out;
 };
+template <class data_type>
+Vec3<data_type> cross(const Vec3<data_type>& l, const Vec3<data_type>& r){
+    return Vec3<data_type>( l[1]*r[2] - l[2]*r[1] , l[2]*r[0] - l[0]*r[2] , l[0]*r[1] - l[1]*r[0] );
+};
+
 template <class data_type>
 Vec3<data_type>  abs(const Vec3<data_type> vec){
     return Vec3<data_type>(std::fabs(vec[0]), std::fabs(vec[1]), std::fabs(vec[2]));

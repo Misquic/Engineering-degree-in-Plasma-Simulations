@@ -41,11 +41,11 @@ type_calc vec::norm(const tcvector& v){
 
 /*constructors*/
 PotentialSolver::PotentialSolver(World& world, unsigned max_solver_it, type_calc tolerance, SolverType solver_type): world(world),
- max_solver_it{max_solver_it}, tolerance{tolerance}, A{world.ni*world.nj*world.nk}, M{world.ni*world.nj*world.nk}, solver_type{solver_type} {
-    if(max_solver_it < 1e4 && solver_type == GS){
-        max_solver_it = 20e3;
-    }
+ PCG_max_solver_it{max_solver_it}, tolerance{tolerance}, A{world.ni*world.nj*world.nk}, M{world.ni*world.nj*world.nk}, solver_type{solver_type} {
     GS_max_solver_it = 20*max_solver_it;
+    if(solver_type == GS){
+        GS_max_solver_it = max_solver_it;
+    }
     precalculate();
     buildMatrix();
 };
@@ -83,7 +83,7 @@ bool PotentialSolver::solveGS(){
     double ne{};
     /*solve potential using GS and SOR with neuman conditions*/
     /*GS*/
-    for(it = 0; it < max_solver_it; it++){
+    for(it = 0; it < GS_max_solver_it; it++){
 
         for(int i = 0; i < world.ni; i++){
             for(int j = 0; j < world.nj; j++){
@@ -239,7 +239,7 @@ bool PotentialSolver::solvePCGlinear(const Matrix& A, tcvector& x, const tcvecto
     tcvector s = M*g;
     tcvector d = -1*s;
 
-    for(unsigned it = 0; it < max_solver_it; it ++){
+    for(unsigned it = 0; it < PCG_max_solver_it; it ++){
         tcvector z = A*d;
         type_calc alpha = g*s;
         type_calc beta = d*z;
@@ -479,5 +479,12 @@ std::istream& operator>>(std::istream& in, SolverType& type){
 
     return in;
 
+};
+
+unsigned PotentialSolver::get_GS_max_it(){
+    return GS_max_solver_it;
+};
+unsigned PotentialSolver::get_PCG_max_it(){
+    return PCG_max_solver_it;
 };
 
