@@ -127,7 +127,7 @@ bool Sphere::inObject(type_calc3 x) const{
     if(r * r <= r_squared) return true;
     return false;
 };
-type_calc Sphere::lineIntersect(const type_calc3& x1, const type_calc3& x2) const{
+void Sphere::lineIntersect(const type_calc3& x1, const type_calc3& x2, type_calc& t_entry, type_calc3& intersection_point, type_calc3& n) const{ 
     type_calc3 B = x2 - x1;
     type_calc3 A = x1 - this->pos;
     type_calc a = B*B;
@@ -135,16 +135,23 @@ type_calc Sphere::lineIntersect(const type_calc3& x1, const type_calc3& x2) cons
     type_calc c = A*A - this->r_squared;
     type_calc det = b*b - 4*a*c;
 
-    if( det < 0) return 0.5;
-    type_calc tp = (-b + std::sqrt(det))/(2*a);
-    if (tp<0 || tp>1.0){
-        tp = (-b - std::sqrt(det))/(2*a);
-        if (tp<0 || tp>1.0){
-            tp = 0.5;
-            std::cerr << "Failed to find a line-sphere intersection!" << std::endl;
+
+    if( det < 0){
+        t_entry = 0.5;
+    }else{
+        t_entry = (-b + std::sqrt(det))/(2*a);
+        if (t_entry<0 || t_entry>1.0){
+            t_entry = (-b - std::sqrt(det))/(2*a);
+            if (t_entry<0 || t_entry>1.0){
+                t_entry = 0.5;
+                std::cerr << "Failed to find a line-sphere intersection!" << std::endl;
+            }
         }
     }
-    return tp;
+
+    intersection_point = x1 + t_entry*B; // intersect pos on surface
+    n = (intersection_point-this->pos).unit();
+    
 
 };
 
@@ -172,6 +179,14 @@ Rectangle::Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides, type_calc3
     x_min = pos - half_sides;
     x_max = pos + half_sides;
 };
+Rectangle::Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides): Object(pos, phi), orientation{0,0,0}{
+    this->sides = {fabs(sides[0]), fabs(sides[1]), fabs(sides[2])};
+    half_sides = sides*0.5;
+    name = "Rectangle";
+    x_min = pos - half_sides;
+    x_max = pos + half_sides;
+};;
+
 Rectangle::Rectangle(const Rectangle& other): Object(other), sides{other.sides}, orientation{other.orientation}{
     name = "Rectangle";
 };
@@ -237,44 +252,87 @@ bool Rectangle::inObject(type_calc3 x) const{ //for now orientation is not taken
     }
     return true;
 };
-type_calc Rectangle::lineIntersect(const type_calc3& x1, const type_calc3& x2) const{ //only if x2 is inside the box
+void Rectangle::lineIntersect(const type_calc3& x1, const type_calc3& x2, type_calc& t_entry, type_calc3& pos, type_calc3& n) const{ //only if x2 is inside the box
     type_calc3 A = x2 - x1; // if x2 == x1, A[i] = inf, min and < 0 covers it
 
     type_calc3 t_x_min = (x_min - x1)/A; //time of intersection with x_min sides
     type_calc3 t_x_max = (x_max - x1)/A; //time of intersection with x_max sides
 
-    //std::cout << "min: " << t_x_min << " max: " <<  t_x_max << "\n";
+    int possible_sides[3] = {0,1,2}; // x-, y-, z-, x+, y+, z+
+    std::cout << "min: " << t_x_min << " max: " <<  t_x_max << "\n";
+
 
 ///////////////////////////
 
     for(int i = 0; i < 3; i++){
         if(t_x_min[i] > t_x_max[i]){
             std::swap(t_x_min[i], t_x_max[i]);
+            possible_sides[i] += 3; // to find side of intersection
         }
     }
-
-    type_calc t_entry = std::max({t_x_min[0], t_x_min[1], t_x_min[2]});
-    return t_entry;
-    type_calc t_exit = std::min({t_x_max[0], t_x_max[1], t_x_max[2]});
-
-///////////////////////////
+    std::cout << "min: " << t_x_min << " max: " <<  t_x_max << "\n";
 
 
+    //find max and side:
+    int sides[3] = {0,0,0}; 
+    t_entry = t_x_min[0];
+    sides[0] = possible_sides[0];
+    int j = 0, k = 0, t = 0; //k number of intersecting sides if particle intersects with vertex or edge
+    for(int i = 0; i < 2; i++){
+        if(t_entry < t_x_min[i+1]){
+            t_entry = t_x_min[i+1];
+            j = i+1;
+            k = 0;
+        }
+        else if( std::abs(t_entry - t_x_min[i+1]) < 1e-6){
+            k++;
+            t = i+1;
 
-    // checks which plane is encountered first, but it doenst have to be side :(
-    // type_calc t_mins[3]; //times of intersections with real sides that line marked 
-    // for(int i = 0; i < 3; i++){
-    //     if(t_x_min[i]<0){ //if time < 0 it means that x_min is "behind" particle so other side must be intersected, always at least 3 sides are in front of particle 
-    //         t_mins[i] = t_x_max[i];
-    //     }
-    //     else{ //if in particular i-th direction two sides are in front of particle line
-    //         t_mins[i] = std::min(t_x_min[i], t_x_max[i]);
-    //     }
-    // }
+        }
+    }
+    std::cout << t_x_min[2] - t_x_min[0] << "\n";
 
-    // return std::min({t_mins[0], t_mins[1], t_mins[2]}); //we have now granted that times are for nearest sides in front of particle, we chose that one which is nearest
+    find_n(possible_sides[j], n); // 0, 1, 2, 3, 4 or 5 -> (-1,0,0), (0,-1,0), (0,0,-1), (1,0,0), (0,1,0), (0,0,1)
+    
+    if(k != 0){
+        if(k<2){
+            find_n(possible_sides[t], n);
+        }
+        else{
+            find_n(possible_sides[2], n);
+            find_n(possible_sides[1], n);
+        }
+        n.normalise();
+    }
 
+    pos = x1 + t_entry*(x2 - x1);
 };
 
+void Rectangle::find_n(int side, type_calc3& n) const{
+    switch(side){
+        case 0:
+            n += {-1,0,0};
+            break;
+        case 1:
+            n += {0,-1,0};
+            break;
+        case 2:
+            n += {0,0,-1};
+            break;
+        case 3:
+            n += {1,0,0};
+            break;
+        case 4:
+            n += {0,1,0};
+            break;
+        case 5:
+            n += {0,0,1};
+            break;
+        default:
+            std::cerr << "Rectangle::lineintersect default for side, we shouldn't be here\n";
+            n = {0,0,0};
+            break;
+    }
+}
 
 

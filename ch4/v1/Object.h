@@ -1,6 +1,7 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 #include <iostream>
+#include <tuple>
 #include <string>
 #include "all.h"
 #include "Vec3.h"
@@ -47,11 +48,10 @@ public:
     bool isMovable() noexcept;
     // virtual std::ostream print();
     virtual void print(std::ostream& out) const;
-
-    //booklike
+    
     virtual bool inObject(type_calc3 x) const = 0;
-    virtual type_calc lineIntersect(const type_calc3& x1, const type_calc3& x2) const = 0;
-
+    virtual void lineIntersect(const type_calc3& x1, const type_calc3& x2, type_calc& tp, type_calc3& pos, type_calc3& n) const = 0; //return tp, x_intersection, normal to surface at the point of intersection
+    
     friend std::ostream& operator<<(std::ostream& out, const Object& obj);
     friend class Objects;
 };
@@ -81,7 +81,7 @@ public:
 
     virtual void print(std::ostream& out) const override;
     virtual bool inObject(type_calc3 x) const override;
-    virtual type_calc lineIntersect(const type_calc3& x1, const type_calc3& x2) const override;
+    virtual void lineIntersect(const type_calc3& x1, const type_calc3& x2, type_calc& tp, type_calc3& pos, type_calc3& n) const override;
 
 
     friend std::ostream& operator<<(std::ostream& out, Sphere obj);
@@ -96,10 +96,13 @@ protected:
     type_calc3 half_sides;
     type_calc3 orientation;
     type_calc3 x_min, x_max; // position of minimum vertex, position of maximum vertex
+
+    void find_n(int side, type_calc3& n) const; //used in line intersect 
 public:
     /*constructors*/
     Rectangle(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc3 sides, type_calc3 orientation);
     Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides, type_calc3 orientation);
+    Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides);
     Rectangle(const Rectangle& other);
     Rectangle(Rectangle&& other);
 
@@ -114,7 +117,7 @@ public:
 
     virtual void print(std::ostream& out) const override;
     virtual bool inObject(type_calc3 x) const override;
-    type_calc lineIntersect(const type_calc3& x1, const type_calc3& x2) const;
+    virtual void lineIntersect(const type_calc3& x1, const type_calc3& x2, type_calc& t_entry, type_calc3& pos, type_calc3& n) const override; //return tp, point of intersection and normal to reflected surface
 
     friend std::ostream& operator<<(std::ostream& out, Rectangle obj);
 
