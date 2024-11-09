@@ -11,10 +11,12 @@
 #include "Species.h"
 #include "Object.h"
 #include "Source.h"
+#include "Rnd.h"
 
 //tags: flow aroung a shape(sphere), shape inside, inlet, neuman elsewhere, Maxwellian velocity distribution//
 
 int main(int argc, char* argv[] ){
+
     std::vector<std::string> args(argv + 1, argv+argc); // passing pointers to argv values
     if(parseArgument(args, "--help") || parseArgument(args, "--h")){
         print_help();
@@ -41,9 +43,7 @@ int main(int argc, char* argv[] ){
         int solver_max_it = parseArgument(args, "--s_max_it", 1000); //or 2e4;
         type_calc phi_sphere = parseArgument(args, "--sphere_phi", -100.0);
 
-        std::cout << "Solver Type: " << solver_type << "\n";
-	    std::cout << "Solver max iterations: " << solver_max_it <<"\n";
-	    std::cout << "Sphere potential: " << phi_sphere << " V" << std::endl;
+
         
         // Instantiate World
         world_ptr = std::make_unique<World>(21, 21, 41, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.4});
@@ -76,6 +76,14 @@ int main(int argc, char* argv[] ){
         // Instantiate solver
         solver_ptr = std::make_unique<PotentialSolver>(*world_ptr, solver_max_it ,1e-4, static_cast<SolverType>(solver_type));  // Jeśli solver nie został zainicjalizowany
         solver_ptr->setReferenceValues(0, 1.5, num_den_ions);
+
+        std::cout << "Solver Type: " << solver_type << "\n";
+	    std::cout << "GS Solver max iterations: " << solver_ptr->get_GS_max_it() <<"\n";
+        if(solver_type==PCG){
+    	    std::cout << "PCG Solver max iterations: " << solver_ptr->get_PCG_max_it() <<"\n";
+        }
+	    std::cout << "Sphere potential: " << phi_sphere << " V" << std::endl;
+
     }
 
     //////////////

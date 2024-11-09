@@ -33,7 +33,7 @@ void Species::advance(){
 
         type_calc3 ef_part = world.ef.gather(lc);
 
-        part_ptr->vel += ef_part*(dt*charge/mass);
+        part_ptr->vel += ef_part*(dt*charge/mass); /////////////////////////////save
         part_ptr->pos += part_ptr->vel * dt;
 
         if(world.inObject(part_ptr->pos) || !world.inBounds(part_ptr->pos)){
