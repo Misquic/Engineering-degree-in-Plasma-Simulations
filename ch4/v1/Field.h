@@ -212,10 +212,9 @@ void Field<data_type>::updateAverage(const Field<data_type>& other){
 template <class data_type>
 void Field<data_type>::updateMovingAverage(const Field<data_type>& other){
     avg_samples++;
-    if(avg_samples>21){
+    if(avg_samples>20){
         clear();
         avg_samples = 1;
-        std::cout << "\n now\n";
     };
 
     for(int i = 0; i < this->ni; i++){
@@ -225,7 +224,7 @@ void Field<data_type>::updateMovingAverage(const Field<data_type>& other){
             }
         }
     }
-    data[0][0][0] = avg_samples;
+    //data[0][0][0] = avg_samples;
 };
 template <class data_type>
 int Field<data_type>::U(int i, int j, int k) const{

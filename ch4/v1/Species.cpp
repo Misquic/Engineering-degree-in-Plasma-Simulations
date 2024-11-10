@@ -16,7 +16,7 @@ Species::Species(std::string name, type_calc mass, type_calc charge, World& worl
 size_t Species::getNumParticles() const{
     return particles.size();
 };
-void Species::advance(){
+void Species::advance(Species& neutrals, Species& spherium){//TODO change it so species take into account if its neutral or not? -> subclasses
     type_calc dt = world.getDt();
     type_calc3 x0 = world.getX0();
     type_calc3 xm = world.getXm();
@@ -48,6 +48,7 @@ void Species::advance(){
 
             type_calc3 pos_old = part_ptr->pos;
             part_ptr->pos += part_ptr->vel*t_reminding*dt;
+
             int in_object = world.inObject(part_ptr->pos);
 
             if(!world.inBounds(part_ptr->pos)){
@@ -60,7 +61,35 @@ void Species::advance(){
                 type_calc tp;
                 type_calc3 n; //normal vector to the surface at the point of intersection
                 world.lineIntersect(pos_old, part_ptr->pos, in_object, tp, part_ptr->pos, n); // passing tp, pos, n so it overwrites them to correct values, in stead of returning tuple
-                part_ptr->vel = sampleReflectedVelocity(part_ptr->pos, part_ptr->vel.length(), n); 
+                type_calc v_mag_pre_impact = part_ptr->vel.length();
+                if(!charge){ //neutrals
+                    part_ptr->vel = sampleReflectedVelocity(part_ptr->pos, part_ptr->vel.length(), n); 
+                }
+                else{ //ions
+                    type_calc mpw_ratio = this->mpw0/neutrals.mpw0;
+                    //kill
+
+                    /*inject neutrals*/
+                    int mp_create = (int)(mpw_ratio + rnd()); //number of macroparticles to create
+                    for(int i = 0; i < mp_create; i ++){
+                        type_calc3 vel = sampleReflectedVelocity(part_ptr->pos, v_mag_pre_impact, n);
+                        neutrals.addParticle(part_ptr->pos, vel);
+                    }
+                    /*emit sputtered material using simple yield model*/
+                    type_calc sput_yield = (v_mag_pre_impact>5e3)?0.1:0;
+                    type_calc sput_macroweight_ratio = sput_yield*this->mpw0/spherium.mpw0;
+                    int sput_mp_create = (int)(sput_macroweight_ratio + rnd());//number of sputtered macroparticles to create
+                    for(int i = 0; i < sput_mp_create; i++){
+                        type_calc3 vel = sampleReflectedVelocity(part_ptr->pos, v_mag_pre_impact, n);
+                        spherium.addParticle(part_ptr->pos, vel);
+                    }
+                    particles[p] = std::move(particles[np-1]);
+                    np--;
+                    p--;
+                    break; //does it work correctly?
+                }
+
+                
                 t_reminding *= (1-tp);
                 continue;
             }
@@ -119,6 +148,10 @@ void Species::addParticle(type_calc3 pos, type_calc3 vel, type_calc macro_weight
 
     particles.emplace_back(pos, vel, macro_weight);
 };
+void Species::addParticle(type_calc3 pos, type_calc3 vel){
+    addParticle(pos, vel, mpw0);
+};
+
 void Species::loadParticleBox(type_calc3 x1, type_calc3 x2, type_calc num_den_, type_calc num_macro){
     /*x1 - starting vertex of box
       x2 - opposite vertex of box
@@ -132,7 +165,6 @@ void Species::loadParticleBox(type_calc3 x1, type_calc3 x2, type_calc num_den_, 
 
     particles.reserve(num_macro);
 
-    extern Rnd rnd;
     type_calc3 pos;
     type_calc3 vel;
     for(int i = 0; i < num_macro; i++){
@@ -234,7 +266,6 @@ type_calc3 Species::sampleReflectedVelocity(const type_calc3& pos, const type_ca
     type_calc v_mag2 = v_mag1 + a_th*(v_th - v_mag1);
 
     // part which in book is sphereDiffuseVector
-    extern Rnd rnd;
     type_calc sin_theta = rnd();
     type_calc cos_theta = std::sqrt(1 - sin_theta*sin_theta);
     type_calc psi = 2*Const::pi*rnd();
@@ -251,7 +282,6 @@ type_calc3 Species::sampleReflectedVelocity(const type_calc3& pos, const type_ca
 
 type_calc Species::sampleVth(const type_calc T) const{
     type_calc v_th = sqrt(2*Const::k*T/mass);
-    extern Rnd rnd;
     type_calc v1 = v_th * (rnd() + rnd() + rnd() - 1.5);
     type_calc v2 = v_th * (rnd() + rnd() + rnd() - 1.5);
     type_calc v3 = v_th * (rnd() + rnd() + rnd() - 1.5);

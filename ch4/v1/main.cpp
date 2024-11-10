@@ -70,25 +70,29 @@ int main(int argc, char* argv[] ){
 
         // Instantiate sphere
         world_ptr->addObject<Sphere>(type_calc3(0, 0, 0.15), phi_sphere, 0.05);
-        // world_ptr->addObject<Rectangle>(type_calc3(0, 0, 0.15), phi_sphere, type_calc3(0.1, 0.07, 0.2));
+        world_ptr->addObject<Rectangle>(type_calc3(0, 0, 0.35), phi_sphere, type_calc3(0.05, 0.05, 0.05));
         world_ptr->computeObjectID();
         std::string inlet_Face = "z-";
         world_ptr->addInlet(inlet_Face);
 
         // Instantiate species
         //species.reserve(3);
-        species.emplace_back("O+", 16 * Const::amu, Const::q_e, *world_ptr, 1e2);  // ions //last is mpw0
-        species.emplace_back("O++", 16 * Const::amu, 2*Const::q_e, *world_ptr, 5e1);
-        species.emplace_back("O", 16 * Const::amu, 0, *world_ptr, 1e5);
+        species.emplace_back("O+", 16*Const::amu, Const::q_e, *world_ptr, 1e2);  // ions //last is mpw0
+        species.emplace_back("O++", 16*Const::amu, 2*Const::q_e, *world_ptr, 5e1);
+        species.emplace_back("O", 16*Const::amu, 0, *world_ptr, 2e3);
+        /*spherium (for rectangle also name temporary)*/
+        species.emplace_back("Sph", 100*Const::amu, 0, *world_ptr, 2e2);
+        species.emplace_back("Sph+", 100*Const::amu, Const::q_e, *world_ptr, 2e2);
         // species.emplace_back("e-", Const::m_e, -Const::q_e, *world_ptr);      // electrons
+
 
         // Instantiate sources
         const type_calc num_den_ions = 1e10; //mean ion density
-        const type_calc num_den_neutrals = 1e13; 
+        const type_calc num_den_neutrals = 1e9; 
         //sources.reserve(3);
         sources.emplace_back(species[0], *world_ptr, 7000, 0.8*num_den_ions); //O+
         sources.emplace_back(species[1], *world_ptr, 7000, 0.1*num_den_ions); //O++
-        sources.emplace_back(species[2], *world_ptr, 7000, num_den_neutrals); //O
+        //sources.emplace_back(species[2], *world_ptr, 7000, num_den_neutrals); //O
         
 
         // Instantiate solver
@@ -103,6 +107,10 @@ int main(int argc, char* argv[] ){
 	    std::cout << "Sphere potential: " << phi_sphere << " V" << std::endl;
 
     }
+
+    Species& neutrals = species[2];
+    Species& spherium = species[3];
+
 
     //////////////
     
@@ -124,7 +132,7 @@ int main(int argc, char* argv[] ){
             source.sample();
         }
         for(Species&  sp: species){
-            sp.advance();
+            sp.advance(neutrals, spherium);
             sp.computeNumberDensity();
         }
 
@@ -132,11 +140,12 @@ int main(int argc, char* argv[] ){
         solver_ptr->solve();
         solver_ptr->computeEF();
 
-        for(Species&  sp: species){
-            sp.updateAverages();
+        if(world_ptr->getTs()>5){
+            for(Species&  sp: species){
+                sp.updateAverages();
+            }
         }
         
-
         Output::diagOutput(*world_ptr, species);
         Output::screenOutput(*world_ptr, species);
         int ts = world_ptr->getTs();

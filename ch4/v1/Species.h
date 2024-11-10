@@ -6,6 +6,7 @@
 #include "Vec3.h"
 #include "World.h"
 #include "Field.h"
+#include "Rnd.h"
 
 class Particle{ //used os macroparticle
 protected:
@@ -39,10 +40,11 @@ public:
 
     /*methods*/
     size_t getNumParticles() const;
-    void advance();
+    void advance(Species& neutrals, Species& spherium);
     void computeNumberDensity();
     void addParticle(type_calc x, type_calc y, type_calc z, type_calc u, type_calc v, type_calc w, type_calc macro_weight);
     void addParticle(type_calc3 pos, type_calc3 vel, type_calc macro_weight);
+    void addParticle(type_calc3 pos, type_calc3 vel);
     //void addParticle(Particle particle); //not used, to do?
     void loadParticleBox(type_calc3 x1, type_calc3 x2, type_calc num_den, type_calc num_macro);
     void loadParticleBoxQS(type_calc3 x1, type_calc3 x2, type_calc num_den, int3 num_macro);
@@ -56,4 +58,6 @@ public:
     type_calc3 sampleReflectedVelocity(const type_calc3& pos, const type_calc len, const type_calc3& n) const;
     type_calc sampleVth(const type_calc T) const;
 };
+
+extern Rnd rnd;
 #endif
