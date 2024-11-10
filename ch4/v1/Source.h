@@ -8,6 +8,8 @@
 /*ideas:
     make it choose a face of inlet, but overload or sth so its not computing consuming*/
 
+
+
 class ColdBeamSource{ //Z- FACE
 protected:
     Species   &sp;      //reference to injected species
