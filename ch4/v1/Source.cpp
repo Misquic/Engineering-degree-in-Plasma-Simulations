@@ -18,6 +18,7 @@ void ColdBeamSource::sample(){
     int num_macro = (int)(num_micro/sp.mpw0 + rnd());
 
     type_calc3 pos{}, vel{};
+    
     for(int i = 0; i < num_macro; i++){ //Z- face
         pos = {x0[0] + rnd()*Lx, x0[1] + rnd()*Ly, x0[2]};
         vel = {0, 0, v_drift};

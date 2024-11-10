@@ -60,7 +60,7 @@ void Species::advance(){
                 type_calc tp;
                 type_calc3 n; //normal vector to the surface at the point of intersection
                 world.lineIntersect(pos_old, part_ptr->pos, in_object, tp, part_ptr->pos, n); // passing tp, pos, n so it overwrites them to correct values, in stead of returning tuple
-                //part_ptr->vel = sampleReflectedVelocity(part_ptr->pos, part_ptr->vel.length(), n); 
+                part_ptr->vel = sampleReflectedVelocity(part_ptr->pos, part_ptr->vel.length(), n); 
                 t_reminding *= (1-tp);
                 continue;
             }
@@ -225,5 +225,36 @@ type_calc Species::getPE(){ //inmplement somewhere else variable that tracks it 
     return pe * charge;
 };
 void Species::updateAverages(){
-    den_avg.updateAverage(den);
+    den_avg.updateMovingAverage(den);
 };
+
+type_calc3 Species::sampleReflectedVelocity(const type_calc3& pos, const type_calc v_mag1, const type_calc3& n) const{
+    type_calc v_th = sampleVth(300); //pass Temperature, assuming here 300
+    const type_calc a_th = 1; //thermal accommodation coefficient
+    type_calc v_mag2 = v_mag1 + a_th*(v_th - v_mag1);
+
+    // part which in book is sphereDiffuseVector
+    extern Rnd rnd;
+    type_calc sin_theta = rnd();
+    type_calc cos_theta = std::sqrt(1 - sin_theta*sin_theta);
+    type_calc psi = 2*Const::pi*rnd();
+
+    type_calc3 t1;
+    if(n*type_calc3{1,0,0} != 0) t1 = n.cross({1,0,0});
+    else t1 = n.cross({0,1,0});
+    type_calc3 t2 = n.cross(t1);
+    type_calc3 diffuse_vector = sin_theta*std::cos(psi)*t1 + std::sin(psi)*t2 + cos_theta*n;
+    // end of that part
+
+    return v_mag2*diffuse_vector;
+};
+
+type_calc Species::sampleVth(const type_calc T) const{
+    type_calc v_th = sqrt(2*Const::k*T/mass);
+    extern Rnd rnd;
+    type_calc v1 = v_th * (rnd() + rnd() + rnd() - 1.5);
+    type_calc v2 = v_th * (rnd() + rnd() + rnd() - 1.5);
+    type_calc v3 = v_th * (rnd() + rnd() + rnd() - 1.5);
+    return std::sqrt(v1*v1 + v2*v2 + v3*v3);
+};
+

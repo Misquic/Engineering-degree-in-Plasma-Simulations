@@ -37,6 +37,7 @@ public:
     void scatter(type_calc3 lc, type_calc val);
     data_type gather(type_calc3 lc) const;
     void updateAverage(const Field<data_type>& other);
+    void updateMovingAverage(const Field<data_type>& other); //it's not a real moving average, just average from up to 21 samples but can have less samples.
     int U(int i, int j, int k) const;
 
     /*operators []*/
@@ -207,6 +208,24 @@ void Field<data_type>::updateAverage(const Field<data_type>& other){
             }
         }
     }
+};
+template <class data_type>
+void Field<data_type>::updateMovingAverage(const Field<data_type>& other){
+    avg_samples++;
+    if(avg_samples>21){
+        clear();
+        avg_samples = 1;
+        std::cout << "\n now\n";
+    };
+
+    for(int i = 0; i < this->ni; i++){
+        for(int j = 0; j < this->nj; j++){
+            for(int k = 0; k < this->nk; k++){
+                data[i][j][k] = (other[i][j][k] + data[i][j][k]*(avg_samples - 1.0))/avg_samples;
+            }
+        }
+    }
+    data[0][0][0] = avg_samples;
 };
 template <class data_type>
 int Field<data_type>::U(int i, int j, int k) const{
