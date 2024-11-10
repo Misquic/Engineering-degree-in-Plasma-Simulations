@@ -259,7 +259,7 @@ void Rectangle::lineIntersect(const type_calc3& x1, const type_calc3& x2, type_c
     type_calc3 t_x_max = (x_max - x1)/A; //time of intersection with x_max sides
 
     int possible_sides[3] = {0,1,2}; // x-, y-, z-, x+, y+, z+
-    std::cout << "min: " << t_x_min << " max: " <<  t_x_max << "\n";
+    //std::cout << "min: " << t_x_min << " max: " <<  t_x_max << "\n";
 
 
 ///////////////////////////
@@ -270,7 +270,7 @@ void Rectangle::lineIntersect(const type_calc3& x1, const type_calc3& x2, type_c
             possible_sides[i] += 3; // to find side of intersection
         }
     }
-    std::cout << "min: " << t_x_min << " max: " <<  t_x_max << "\n";
+    //std::cout << "min: " << t_x_min << " max: " <<  t_x_max << "\n";
 
 
     //find max and side:
@@ -290,7 +290,7 @@ void Rectangle::lineIntersect(const type_calc3& x1, const type_calc3& x2, type_c
 
         }
     }
-    std::cout << t_x_min[2] - t_x_min[0] << "\n";
+    //std::cout << t_x_min[2] - t_x_min[0] << "\n";
 
     find_n(possible_sides[j], n); // 0, 1, 2, 3, 4 or 5 -> (-1,0,0), (0,-1,0), (0,0,-1), (1,0,0), (0,1,0), (0,0,1)
     

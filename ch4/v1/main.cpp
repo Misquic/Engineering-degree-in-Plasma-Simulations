@@ -70,7 +70,7 @@ int main(int argc, char* argv[] ){
 
         // Instantiate sphere
         world_ptr->addObject<Sphere>(type_calc3(0, 0, 0.15), phi_sphere, 0.05);
-        //world_ptr->addObject<Rectangle>(type_calc3(0, 0, 0.15), phi_sphere, type_calc3(0.1, 0.07, 0.2), type_calc3(1, 1, 1));
+        // world_ptr->addObject<Rectangle>(type_calc3(0, 0, 0.15), phi_sphere, type_calc3(0.1, 0.07, 0.2));
         world_ptr->computeObjectID();
         std::string inlet_Face = "z-";
         world_ptr->addInlet(inlet_Face);
@@ -132,11 +132,10 @@ int main(int argc, char* argv[] ){
         solver_ptr->solve();
         solver_ptr->computeEF();
 
-        if(world_ptr->steadyState(species)){
-            for(Species&  sp: species){
-                sp.updateAverages();
-            }
+        for(Species&  sp: species){
+            sp.updateAverages();
         }
+        
 
         Output::diagOutput(*world_ptr, species);
         Output::screenOutput(*world_ptr, species);
@@ -144,6 +143,7 @@ int main(int argc, char* argv[] ){
         if(ts%10 == 0 || world_ptr->isLastTimeStep()){ //|| (ts > 140 && ts < 160)){
             Output::fields(*world_ptr, species);
             std::cout << "Time taken so far: " << world_ptr->getWallTime() << std::endl;
+
         }
        
     }

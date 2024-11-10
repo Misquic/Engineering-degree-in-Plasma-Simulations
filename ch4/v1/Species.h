@@ -51,5 +51,9 @@ public:
     type_calc  getKE();           // calculate and return kinetic energy
     type_calc  getPE();           // calculate and return potential energy
     void       updateAverages();  // update all average values
+
+    //for advance
+    type_calc3 sampleReflectedVelocity(const type_calc3& pos, const type_calc len, const type_calc3& n) const;
+    type_calc sampleVth(const type_calc T) const;
 };
 #endif
