@@ -16,6 +16,12 @@
 //tags: flow aroung a shape(sphere), shape inside, inlet, neuman elsewhere, Maxwellian velocity distribution//
 int main(int argc, char* argv[] ){
 
+    World world(21, 21, 41, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.4});
+    Species sp("Sp", Const::amu, Const::q_e, world, 200);
+
+    type_calc T = 300, vel = 1e3, mpw = 200;
+    sp.sampleVthVariableMpw(T, vel, mpw);
+    return 0;
     // World world(21, 21, 41, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.4});
     // world.addObject<Rectangle>(type_calc3(0, 0, 0), -100,type_calc3{0.1, 0.2, 0.3});
     // // world.addObject<Sphere>(type_calc3(0, 0, 0.15), -100, 0.05);
@@ -40,8 +46,9 @@ int main(int argc, char* argv[] ){
         print_help();
         return 0;
     }
-    std::vector<Species> species;
-    std::vector<ColdBeamSource> sources;
+    std::vector<Species> species; //species container
+    // std::vector<WarmBeamSource> sources; //sources container
+    std::vector<std::unique_ptr<Source>> sources; //sources container
     //std::vector<std::unique_ptr<Object>> objects_ptrs; // using vector to object pointers so that we can use polimorphysm and store multiple different Objects in one container
     std::unique_ptr<PotentialSolver> solver_ptr;
     std::unique_ptr<World> world_ptr;
@@ -72,7 +79,7 @@ int main(int argc, char* argv[] ){
         world_ptr->addObject<Sphere>(type_calc3(0, 0, 0.15), phi_sphere, 0.05);
         world_ptr->addObject<Rectangle>(type_calc3(0, 0, 0.35), phi_sphere, type_calc3(0.05, 0.05, 0.05));
         world_ptr->computeObjectID();
-        std::string inlet_Face = "z-";
+        std::string inlet_Face = "-z";
         world_ptr->addInlet(inlet_Face);
 
         // Instantiate species
@@ -90,8 +97,13 @@ int main(int argc, char* argv[] ){
         const type_calc num_den_ions = 1e10; //mean ion density
         const type_calc num_den_neutrals = 1e9; 
         //sources.reserve(3);
-        sources.emplace_back(species[0], *world_ptr, 7000, 0.8*num_den_ions); //O+
-        sources.emplace_back(species[1], *world_ptr, 7000, 0.1*num_den_ions); //O++
+        type_calc T = 300;
+        // sources.emplace_back(species[0], *world_ptr, 7000, 0.8*num_den_ions, T, inlet_Face); //O+
+        // sources.emplace_back(species[1], *world_ptr, 7000, 0.1*num_den_ions, T, inlet_Face); //O++
+        // sources.emplace_back(std::make_unique<ColdBeamSource>(species[0], *world_ptr, 7000, 0.8*num_den_ions, inlet_Face)); //O+
+        // sources.emplace_back(std::make_unique<ColdBeamSource>(species[1], *world_ptr, 7000, 0.1*num_den_ions, inlet_Face)); //O++
+        sources.emplace_back(std::make_unique<WarmBeamSource>(species[0], *world_ptr, 7000, 0.8*num_den_ions, T, inlet_Face)); //O+
+        sources.emplace_back(std::make_unique<WarmBeamSource>(species[1], *world_ptr, 7000, 0.1*num_den_ions, T, inlet_Face)); //O++
         //sources.emplace_back(species[2], *world_ptr, 7000, num_den_neutrals); //O
         
 
@@ -128,9 +140,13 @@ int main(int argc, char* argv[] ){
     //world_ptr->setTimeStart();
     while(world_ptr->advanceTime()){
 
-        for(ColdBeamSource& source: sources){
-            source.sample();
+        for(std::unique_ptr<Source>& source: sources){
+            source->sample();
         }
+        // for(WarmBeamSource& source: sources){
+        //     source.sample();
+        // }
+        auto time_start = world_ptr->getWallTime();
         for(Species&  sp: species){
             sp.advance(neutrals, spherium);
             sp.computeNumberDensity();

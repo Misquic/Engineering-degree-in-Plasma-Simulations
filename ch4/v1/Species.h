@@ -57,6 +57,8 @@ public:
     //for advance
     type_calc3 sampleReflectedVelocity(const type_calc3& pos, const type_calc len, const type_calc3& n) const;
     type_calc sampleVth(const type_calc T) const;
+    void sampleVthVariableMpw(const type_calc T, type_calc& set_vel, type_calc& set_mpw) const;
+
 };
 
 extern Rnd rnd;

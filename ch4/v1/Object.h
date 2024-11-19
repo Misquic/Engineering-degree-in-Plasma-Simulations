@@ -21,16 +21,16 @@ class Object{ //abstract class for other shapes
 protected:
     std::string name = "Object";
     type_calc3 pos;    //position of center of Object
-    type_calc3 vel;    //velocity
+    //type_calc3 vel;    //velocity
 
     /*material properties*/
     type_calc phi = 0;
-    bool movable;
+
 
 public:
     
     /*constructors*/
-    Object(type_calc3 pos, type_calc3 vel, type_calc phi); //normal constructor // needs to be changed
+    //Object(type_calc3 pos, type_calc3 vel, type_calc phi); //normal constructor // needs to be changed
     Object(type_calc3 pos, type_calc phi); //normal constructor for immovable
     Object(const Object& other) noexcept;  //copying constructor
     Object(Object&& other) noexcept;       //moving constructor
@@ -65,7 +65,7 @@ protected:
     type_calc r_squared;
 public:
     /*constructors*/
-    Sphere(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc radius);
+    //Sphere(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc radius);
     Sphere(type_calc3 pos, type_calc phi, type_calc radius);
     Sphere(const Sphere& other);
     Sphere(Sphere&& other);
@@ -100,8 +100,8 @@ protected:
     void find_n(int side, type_calc3& n) const; //used in line intersect 
 public:
     /*constructors*/
-    Rectangle(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc3 sides, type_calc3 orientation);
-    Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides, type_calc3 orientation);
+    //Rectangle(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc3 sides, type_calc3 orientation);
+    Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides, type_calc3 orientation); //TODO implement orientation
     Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides);
     Rectangle(const Rectangle& other);
     Rectangle(Rectangle&& other);

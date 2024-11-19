@@ -145,26 +145,7 @@ bool World::inBounds(type_calc3 pos){
     return true;
 };
 void World::addInlet(std::string face){
-    static std::map<std::string, int> faces{ //map to map faces to ints to work easier later
-        {"x-", 0},
-        {"x+", 1},
-        {"y-", 2},
-        {"y+", 3},
-        {"z-", 4},
-        {"z+", 5},
-        {"-x", 0},
-        {"+x", 1},
-        {"-y", 2},
-        {"+y", 3},
-        {"-z", 4},
-        {"+z", 5},
-    };
-    lower(face);
-    if(faces.find(face) == faces.end()){ //checking if passed wrong argument
-        throw std::invalid_argument("Passed wrong face name.");
-        return;
-    }
-    int find = faces[face];
+    int find = inletName2Index(face);  
     switch(find){
     case 0:
         for(int j = 0; j < nj; j++){
@@ -220,7 +201,7 @@ void World::addInlet(std::string face){
     }
 };
 void World::computeObjectID(){
-    for(const std::shared_ptr<Object>& obj_ptr: objects){
+    for(const std::unique_ptr<Object>& obj_ptr: objects){
         for(int i = 0; i < this->ni; i++){
             for(int j = 0; j < this->nj; j++){
                 for (int k = 0; k < this->nk; k++){
@@ -237,7 +218,7 @@ void World::computeObjectID(){
 int World::inObject(const type_calc3& pos) const{
     // return index of object which pos is in +1 so 0 is for when it isnt in any object
     int i = 1;
-    for(const std::shared_ptr<Object>& obj_ptr: objects){
+    for(const std::unique_ptr<Object>& obj_ptr: objects){
         if(obj_ptr->inObject(pos)) return i;
         i++;
     }
@@ -250,13 +231,13 @@ void World::lineIntersect(const type_calc3& x1, const type_calc3& x2, const int 
 
 std::string World::printObjects()const{
     std::stringstream ss;
-    for(const std::shared_ptr<Object>& obj_ptr: objects){
+    for(const std::unique_ptr<Object>& obj_ptr: objects){
         ss << *obj_ptr << "\n";
     }
     return ss.str();
 };
 void World::printObjects(std::ostream& out)const{
-    for(const std::shared_ptr<Object>& obj_ptr: objects){
+    for(const std::unique_ptr<Object>& obj_ptr: objects){
         out << *obj_ptr << "\n";
     }
 };
@@ -309,3 +290,27 @@ void World::computeNodeVolumes(){
         }
     }
 }
+
+int inletName2Index(std::string face_name){
+    static std::map<std::string, int> faces{ //map to map faces to ints to work easier later
+        {"x-", 0},
+        {"x+", 1},
+        {"y-", 2},
+        {"y+", 3},
+        {"z-", 4},
+        {"z+", 5},
+        {"-x", 0},
+        {"+x", 1},
+        {"-y", 2},
+        {"+y", 3},
+        {"-z", 4},
+        {"+z", 5},
+    };
+    lower(face_name);
+    if(faces.find(face_name) == faces.end()){ //checking if passed wrong argument
+        throw std::invalid_argument("Passed wrong face name.");
+        return -1;
+    }
+    std::cout << "face: " << faces[face_name] << "\n";
+    return faces[face_name];
+};
