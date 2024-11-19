@@ -26,18 +26,17 @@ void Species::advance(Species& neutrals, Species& spherium){//TODO change it so 
     
     ////////////////////////////// BETTER FASTER STRONGER??? /////////////////////////////
     size_t np = particles.size();
-    Particle* part_ptr;
+
     for(size_t p = 0; p < np; p++){
-        part_ptr = &particles[p];
-        type_calc3 lc = world.XtoL(part_ptr->pos);
+        Particle& part = particles[p];
+        type_calc3 lc = world.XtoL(part.pos);
 
         type_calc3 ef_part = world.ef.gather(lc);
 
-        part_ptr->vel += ef_part*(dt*charge/mass); /////////////////////////////save
+        part.vel += ef_part*(dt*charge/mass); /////////////////////////////save
 
         type_calc t_reminding = 1;
         int n_bounces = 0;
-
         while(t_reminding > 0){
             if(++n_bounces > 20) {
                 particles[p] = std::move(particles[np-1]); //use std::move? this would result in problem with pointer?
@@ -46,12 +45,12 @@ void Species::advance(Species& neutrals, Species& spherium){//TODO change it so 
                 break;
             }
 
-            type_calc3 pos_old = part_ptr->pos;
-            part_ptr->pos += part_ptr->vel*t_reminding*dt;
+            type_calc3 pos_old = part.pos;
+            part.pos += part.vel*t_reminding*dt;
 
-            int in_object = world.inObject(part_ptr->pos);
+            int in_object = world.inObject(part.pos);
 
-            if(!world.inBounds(part_ptr->pos)){
+            if(!world.inBounds(part.pos)){
                 particles[p] = std::move(particles[np-1]);
                 np--;
                 p--;
@@ -60,10 +59,10 @@ void Species::advance(Species& neutrals, Species& spherium){//TODO change it so 
             else if(in_object){
                 type_calc tp;
                 type_calc3 n; //normal vector to the surface at the point of intersection
-                world.lineIntersect(pos_old, part_ptr->pos, in_object, tp, part_ptr->pos, n); // passing tp, pos, n so it overwrites them to correct values, in stead of returning tuple
-                type_calc v_mag_pre_impact = part_ptr->vel.length();
+                world.lineIntersect(pos_old, part.pos, in_object, tp, part.pos, n); // passing tp, pos, n so it overwrites them to correct values, in stead of returning tuple
+                type_calc v_mag_pre_impact = part.vel.length();
                 if(!charge){ //neutrals
-                    part_ptr->vel = sampleReflectedVelocity(part_ptr->pos, part_ptr->vel.length(), n); 
+                    part.vel = sampleReflectedVelocity(part.pos, part.vel.length(), n); 
                 }
                 else{ //ions
                     type_calc mpw_ratio = this->mpw0/neutrals.mpw0;
@@ -72,16 +71,16 @@ void Species::advance(Species& neutrals, Species& spherium){//TODO change it so 
                     /*inject neutrals*/
                     int mp_create = (int)(mpw_ratio + rnd()); //number of macroparticles to create
                     for(int i = 0; i < mp_create; i ++){
-                        type_calc3 vel = sampleReflectedVelocity(part_ptr->pos, v_mag_pre_impact, n);
-                        neutrals.addParticle(part_ptr->pos, vel);
+                        type_calc3 vel = sampleReflectedVelocity(part.pos, v_mag_pre_impact, n);
+                        neutrals.addParticle(part.pos, vel);
                     }
                     /*emit sputtered material using simple yield model*/
                     type_calc sput_yield = (v_mag_pre_impact>5e3)?0.1:0;
                     type_calc sput_macroweight_ratio = sput_yield*this->mpw0/spherium.mpw0;
                     int sput_mp_create = (int)(sput_macroweight_ratio + rnd());//number of sputtered macroparticles to create
                     for(int i = 0; i < sput_mp_create; i++){
-                        type_calc3 vel = sampleReflectedVelocity(part_ptr->pos, v_mag_pre_impact, n);
-                        spherium.addParticle(part_ptr->pos, vel);
+                        type_calc3 vel = sampleReflectedVelocity(part.pos, v_mag_pre_impact, n);
+                        spherium.addParticle(part.pos, vel);
                     }
                     particles[p] = std::move(particles[np-1]);
                     np--;
@@ -287,4 +286,29 @@ type_calc Species::sampleVth(const type_calc T) const{
     type_calc v3 = v_th * (rnd() + rnd() + rnd() - 1.5);
     return std::sqrt(v1*v1 + v2*v2 + v3*v3);
 };
+
+void Species::sampleVthVariableMpw(const type_calc T, type_calc& set_vel, type_calc& set_mpw) const{
+    type_calc v_th = sqrt(2*Const::k*T/mass);
+
+    type_calc v_min = -6 * v_th;
+    static const int NUM_BINS = 41;
+    static const int PARTS_PER_BIN = 10;
+    const int np_uniform = 200;
+    const type_calc dv = -2*v_min/NUM_BINS;
+    const type_calc a = 1/(std::sqrt(Const::pi) * v_th);
+
+    int bin = (int)(rnd() * NUM_BINS); // values: 0 - 40
+    type_calc v = v_min + bin*dv;
+    type_calc fm = a*std::exp(-v*v / (v_th*v_th));
+    type_calc mpw = (int)(this->mpw0 * np_uniform * fm * dv / PARTS_PER_BIN);
+
+    std::cout << "mpw: " << mpw << " mpw0: " << mpw0 << " bin: " << bin;
+
+    v = v_min + bin*dv + rnd()*dv;
+
+    std::cout << " v: " << v << " v_th: " << v_th << std::endl;
+
+    set_vel = v;
+    set_mpw = mpw;  
+}
 

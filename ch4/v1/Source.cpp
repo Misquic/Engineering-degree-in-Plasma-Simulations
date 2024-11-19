@@ -1,28 +1,206 @@
 #include "Source.h"
-#include "Rnd.h"
 
-ColdBeamSource::ColdBeamSource(Species& species, World& world, type_calc v_drift, type_calc den, std::string inlet_Face) noexcept:
- sp{species}, world{world}, v_drift{v_drift}, den{den}, inlet_Face{inlet_Face}{
+Source::Source(Species& species, World& world, type_calc v_drift, type_calc den, std::string inlet_face_name) noexcept:
+ sp{species}, world{world}, v_drift{v_drift}, den{den}, inlet_face_index{inletName2Index(inlet_face_name)}{
+    if(inlet_face_index<0){
+        throw std::invalid_argument("inlet_face_index invlaid, value:" + inlet_face_name);
+    }
     dx = world.getDx();
     x0 = world.getX0();
     Lx = dx[0] * (world.ni-1);
     Ly = dx[1] * (world.nj-1);
-    A = Lx*Ly;
+    Lz = dx[2] * (world.nk-1);
+    if(inlet_face_index == 0 || inlet_face_index == 1){
+        A = Ly*Lz;        
+    }else if(inlet_face_index == 2 || inlet_face_index == 3){
+        A = Lx*Lz;
+    }else{
+        A = Lx*Ly;
+    }
     num_micro = den*v_drift*A*world.getDt(); //N = n*v*A*dt
 };
 
+///////////////////////////////// ColdBeamSource ///////////////////////////////////
 
-void ColdBeamSource::sample(){
-    extern Rnd rnd;
-    //num_micro = den*v_drift*A*world.getDt(); //N = n*v*A*dt 
-    int num_macro = (int)(num_micro/sp.mpw0 + rnd());
+ColdBeamSource::ColdBeamSource(Species& species, World& world, type_calc v_drift, type_calc den, std::string inlet_face_name) noexcept:
+ Source(species, world, v_drift, den, inlet_face_name){
+    setSampleStrategy();
+};
 
-    type_calc3 pos{}, vel{};
-    
-    for(int i = 0; i < num_macro; i++){ //Z- face
-        pos = {x0[0] + rnd()*Lx, x0[1] + rnd()*Ly, x0[2]};
-        vel = {0, 0, v_drift};
-        sp.addParticle(pos, vel, sp.mpw0);
+void ColdBeamSource::setSampleStrategy() noexcept{
+    switch(inlet_face_index){
+        case 0: //x-
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
+                for(int i = 0; i < num_macro; i++){
+                    sp.addParticle({x0[0], x0[1] + rnd()*Ly, x0[2] + rnd()*Lz}, {v_drift, 0, 0}, sp.mpw0);
+                }
+            };
+            break;
+        case 1: //x+
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());
+                for(int i = 0; i < num_macro; i++){
+                    sp.addParticle({x0[0]+Lx, x0[1] + rnd()*Ly, x0[2] + rnd()*Lz}, {-v_drift, 0, 0}, sp.mpw0);
+                }
+            };
+            break;
+        case 2: //y-
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());
+                for(int i = 0; i < num_macro; i++){
+                    sp.addParticle({x0[0] + rnd()*Lx, x0[1], x0[2] + rnd()*Lz}, {0, v_drift, 0}, sp.mpw0);
+                }
+            };
+            break;
+        case 3: //y+
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());
+                for(int i = 0; i < num_macro; i++){
+                    sp.addParticle({x0[0] + rnd()*Lx, x0[1]+Ly, x0[2] + rnd()*Lz}, {0, -v_drift, 0}, sp.mpw0);
+                }
+            };
+            break;
+        case 4: //z-
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());
+                for(int i = 0; i < num_macro; i++){
+                    sp.addParticle({x0[0] + rnd()*Lx, x0[1] + rnd()*Ly, x0[2]}, {0, 0, v_drift}, sp.mpw0);
+                }
+            };
+            break;
+        case 5: //z+
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());
+                for(int i = 0; i < num_macro; i++){
+                    sp.addParticle({x0[0] + rnd()*Lx, x0[1] + rnd()*Ly, x0[2] + Lz}, {0, 0, -v_drift}, sp.mpw0);
+                }
+            };
+            break;
+        
+
     }
+};
 
-}
+void ColdBeamSource::sample()const noexcept{
+    sample_strategy();
+};
+
+///////////////////////////////// ColdBeamSource ///////////////////////////////////
+
+WarmBeamSource::WarmBeamSource(Species& species, World& world, type_calc v_drift, type_calc den, type_calc T, std::string inlet_face_name) noexcept:
+ Source(species, world, v_drift, den, inlet_face_name), T{T}{
+    setSampleStrategy();
+};
+
+void WarmBeamSource::setSampleStrategy() noexcept{ //TODO
+    switch(inlet_face_index){
+        case 0: //x-
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
+                for(int i = 0; i < num_macro; i++){
+                    type_calc v_th = sp.sampleVth(T);
+                    
+                    // random isotropic direction
+                    type_calc theta = 2*Const::pi*rnd();
+                    type_calc r = -1.0 + 2*rnd();
+                    type_calc a = std::sqrt(1 - r*r);
+
+                    type_calc3 vel(v_th*r + v_drift, v_th*(cos(theta)*a), v_th*(sin(theta)*a));  
+
+                    sp.addParticle({x0[0], x0[1] + rnd()*Ly, x0[2] + rnd()*Lz}, vel, sp.mpw0);
+                }
+            };
+            break;
+        case 1: //x+
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
+                for(int i = 0; i < num_macro; i++){
+                    type_calc v_th = sp.sampleVth(T);
+                    
+                    // random isotropic direction
+                    type_calc theta = 2*Const::pi*rnd();
+                    type_calc r = -1.0 + 2*rnd();
+                    type_calc a = std::sqrt(1 - r*r);
+
+                    type_calc3 vel(v_th*r - v_drift, v_th*(cos(theta)*a), v_th*(sin(theta)*a));  
+
+                    sp.addParticle({x0[0] + Lx, x0[1] + rnd()*Ly, x0[2] + rnd()*Lz}, vel, sp.mpw0);
+                }
+            };
+            break;
+        case 2: //y-
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
+                for(int i = 0; i < num_macro; i++){
+                    type_calc v_th = sp.sampleVth(T);
+                    
+                    // random isotropic direction
+                    type_calc theta = 2*Const::pi*rnd();
+                    type_calc r = -1.0 + 2*rnd();
+                    type_calc a = std::sqrt(1 - r*r);
+
+                    type_calc3 vel(v_th*r, v_th*(cos(theta)*a) + v_drift, v_th*(sin(theta)*a));  
+
+                    sp.addParticle({x0[0] + rnd()*Lx, x0[1], x0[2] + rnd()*Lz}, vel, sp.mpw0);
+                }
+            };
+            break;
+        case 3: //y+
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
+                for(int i = 0; i < num_macro; i++){
+                    type_calc v_th = sp.sampleVth(T);
+                    
+                    // random isotropic direction
+                    type_calc theta = 2*Const::pi*rnd();
+                    type_calc r = -1.0 + 2*rnd();
+                    type_calc a = std::sqrt(1 - r*r);
+
+                    type_calc3 vel(v_th*r, v_th*(cos(theta)*a) - v_drift, v_th*(sin(theta)*a));  
+
+                    sp.addParticle({x0[0] + rnd()*Lx, x0[1] + Ly, x0[2] + rnd()*Lz}, vel, sp.mpw0);
+                }
+            };
+            break;
+        case 4: //z-
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
+                for(int i = 0; i < num_macro; i++){
+                    type_calc v_th = sp.sampleVth(T);
+                    
+                    // random isotropic direction // should wrap this in function
+                    type_calc theta = 2*Const::pi*rnd();
+                    type_calc r = -1.0 + 2*rnd();
+                    type_calc a = std::sqrt(1 - r*r);
+
+                    type_calc3 vel(v_th*r, v_th*(cos(theta)*a), v_th*(sin(theta)*a) + v_drift );  
+
+                    sp.addParticle({x0[0] + rnd()*Lx, x0[1] + rnd()*Ly, x0[2]}, vel, sp.mpw0);
+                }
+            };
+            break;
+        case 5: //z+
+            sample_strategy = [this](){
+                int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
+                for(int i = 0; i < num_macro; i++){
+                    type_calc v_th = sp.sampleVth(T);
+                    
+                    // random isotropic direction
+                    type_calc theta = 2*Const::pi*rnd();
+                    type_calc r = -1.0 + 2*rnd();
+                    type_calc a = std::sqrt(1 - r*r);
+
+                    type_calc3 vel(v_th*r, v_th*(cos(theta)*a), v_th*(sin(theta)*a) - v_drift );  
+
+                    sp.addParticle({x0[0] + rnd()*Lx, x0[1] + rnd()*Ly, x0[2] + Lz}, vel, sp.mpw0);
+                }
+            };
+            break;
+    }
+};
+
+void WarmBeamSource::sample()const noexcept{
+    sample_strategy();
+};
+

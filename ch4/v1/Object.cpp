@@ -3,14 +3,13 @@
 #include <algorithm>
 
 /*constructors*/
-Object::Object(type_calc3 pos, type_calc3 vel, type_calc phi): pos{pos}, vel{vel}, phi{phi}, movable{true}{
+//Object::Object(type_calc3 pos, type_calc3 vel, type_calc phi): pos{pos}, vel{vel}, phi{phi}, movable{true}{
+//};
+Object::Object(type_calc3 pos, type_calc phi): pos{pos}, phi{phi}{
 };
-Object::Object(type_calc3 pos, type_calc phi): pos{pos}, vel{vel}, phi{phi}, movable{false}{
-    vel.clear();
+Object::Object(const Object& other) noexcept: pos{other.pos}{ //does it work as intended?
 };
-Object::Object(const Object& other) noexcept: pos{other.pos}, vel{other.vel}, movable{other.movable}{ //does it work as intended?
-};
-Object::Object(Object&& other) noexcept: pos{std::move(other.pos)}, vel{std::move(other.vel)}, movable{other.movable}{
+Object::Object(Object&& other) noexcept: pos{std::move(other.pos)}{
 };
 
 /*destructors*/
@@ -21,18 +20,12 @@ Object::Object(Object&& other) noexcept: pos{std::move(other.pos)}, vel{std::mov
 Object& Object::operator=(const Object& other) noexcept{
     if(this!= &other){
         this->pos = other.pos;
-        if(this->movable){
-            this->vel = other.vel;
-        }
     }
     return *this;
 };
 Object& Object::operator=(Object&& other) noexcept{
     if(this!= &other){
         this->pos = std::move(other.pos);
-        if(this->movable){
-            this->vel = std::move(other.vel);
-        }
     }
     return *this;
 };
@@ -44,16 +37,9 @@ void Object::setPhi(type_calc phi) noexcept{
 type_calc Object::getPhi() noexcept{
     return phi;
 };
-
-bool Object::isMovable() noexcept{
-    return movable;
-}
 void Object::print(std::ostream& out) const{
     out << "Name: " << std::setw(9) << name;
     out << " pos: " << pos;
-    if(movable){
-        out << " vel: " << vel;
-    }
 };
 
 /*friends*/
@@ -65,11 +51,11 @@ std::ostream& operator<<(std::ostream& out, const Object& obj){
 //////////////////////////////////////////////////////// SPHERE ////////////////////////////////////////////////////////
 
 /*constructors*/
-Sphere::Sphere(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc radius): Object(pos, vel, phi), radius{fabs(radius)}{
-    r_squared = radius*radius;
-    name = "Sphere";
-};
-Sphere::Sphere(type_calc3 pos, type_calc phi, type_calc radius): Object(pos, phi), radius{fabs(radius)}{
+// Sphere::Sphere(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc radius): Object(pos, vel, phi), radius{std::abs(radius)}{
+//     r_squared = radius*radius;
+//     name = "Sphere";
+// };
+Sphere::Sphere(type_calc3 pos, type_calc phi, type_calc radius): Object(pos, phi), radius{std::abs(radius)}{
     r_squared = radius*radius;
     name = "Sphere";
 };
@@ -165,22 +151,22 @@ std::ostream& operator<<(std::ostream& out, Sphere obj){ // for std::cout << <Sp
 //////////////////////////////////////////////////////// Rectangle ////////////////////////////////////////////////////////
 
 /*constructors*/
-Rectangle::Rectangle(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc3 sides, type_calc3 orientation): 
- Object(pos, vel, phi), orientation{orientation}{
-    this->sides = {fabs(sides[0]), fabs(sides[1]), fabs(sides[2])};
-    half_sides = sides*0.5;
-    name = "Rectangle";
-};
+// Rectangle::Rectangle(type_calc3 pos, type_calc3 vel, type_calc phi, type_calc3 sides, type_calc3 orientation): 
+//  Object(pos, vel, phi), orientation{orientation}{
+//     this->sides = {fabs(sides[0]), fabs(sides[1]), fabs(sides[2])};
+//     half_sides = sides*0.5;
+//     name = "Rectangle";
+// };
 Rectangle::Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides, type_calc3 orientation): 
  Object(pos, phi), orientation{orientation}{
-    this->sides = {fabs(sides[0]), fabs(sides[1]), fabs(sides[2])};
+    this->sides = {std::abs(sides[0]), std::abs(sides[1]), std::abs(sides[2])};
     half_sides = sides*0.5;
     name = "Rectangle";
     x_min = pos - half_sides;
     x_max = pos + half_sides;
 };
 Rectangle::Rectangle(type_calc3 pos, type_calc phi, type_calc3 sides): Object(pos, phi), orientation{0,0,0}{
-    this->sides = {fabs(sides[0]), fabs(sides[1]), fabs(sides[2])};
+    this->sides = {std::abs(sides[0]), std::abs(sides[1]), std::abs(sides[2])};
     half_sides = sides*0.5;
     name = "Rectangle";
     x_min = pos - half_sides;

@@ -33,7 +33,7 @@ protected:
     type_calc last_en = 0;
 
     
-    std::vector<std::shared_ptr<Object>> objects;
+    std::vector<std::unique_ptr<Object>> objects;
 
     /*protected methods*/
     void computeNodeVolumes();
@@ -106,7 +106,7 @@ template <class T, class... Args>
 void World::addObject(Args&&... args){
     static_assert(std::is_base_of<Object, T>::value, "T must derive from Object");
     try{
-        objects.emplace_back(std::make_shared<T>(std::forward<Args>(args)...));
+        objects.emplace_back(std::make_unique<T>(std::forward<Args>(args)...));
     }
     catch (const std::invalid_argument& e) {
         std::cerr << "Error adding object, supposedly you used wrong arguments that do not match any of constructor of Object or derived class: " << e.what() << '\n';
@@ -115,5 +115,7 @@ void World::addObject(Args&&... args){
     }
 
 }
+
+int inletName2Index(std::string face_name);
 
 #endif
