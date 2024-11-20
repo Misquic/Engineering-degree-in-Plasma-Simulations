@@ -25,6 +25,10 @@ class Species{
 protected: 
     World&                world;      //reference to world object
     std::vector<Particle> particles;  //vector of particles
+    
+    Field<type_calc>  n_sum;                      //number of particles
+    Field<type_calc3> nv_sum;                     //number * velocity
+    Field<type_calc>  nuu_sum, nvv_sum, nww_sum;  // number*vel squared
 
 public:
     const std::string name;    //name of (micro)particle
@@ -32,8 +36,11 @@ public:
     const type_calc   charge;  //charge of sinlge (micro)particle
     const type_calc   mpw0;    //deafult macroparticle weight
 
-    Field<type_calc> den;  //number density;
-    Field<type_calc> den_avg; //average number density;
+    Field<type_calc>  den;               //number density;
+    Field<type_calc>  den_avg;           //average number density;
+    Field<type_calc>  T;                 //temperature
+    Field<type_calc3> vel;               //stream velocity
+    Field<type_calc>  macro_part_count;  //field of number ofmacroparticles per cell
 
     /*constructors*/
     Species(std::string name, type_calc mass, type_calc charge, World& world, type_calc mpw0);
@@ -48,16 +55,25 @@ public:
     //void addParticle(Particle particle); //not used, to do?
     void loadParticleBox(type_calc3 x1, type_calc3 x2, type_calc num_den, type_calc num_macro);
     void loadParticleBoxQS(type_calc3 x1, type_calc3 x2, type_calc num_den, int3 num_macro);
-    type_calc  getMicroCount();   // calculate and return all number of micro particles
-    type_calc3 getMomentum();     // calculate and return momentum
-    type_calc  getKE();           // calculate and return kinetic energy
-    type_calc  getPE();           // calculate and return potential energy
-    void       updateAverages();  // update all average values
+
+    
+    /*for diagnostics and outputs*/
+    type_calc  getMicroCount();                         // calculate and return all number of micro particles
+    type_calc3 getMomentum();                           // calculate and return momentum
+    type_calc  getKE();                                 // calculate and return kinetic energy
+    type_calc  getPE();                                 // calculate and return potential energy
+    void       updateAverages();                        // update all average values
+    void       sampleMoments();                         // sample moments od velocity distribution function (n, nv, nuu, nvv, nww)
+    void       computeGasProperties();                  // use sampled momentss to compute velocity and temperature
+    void       clearSamples();                          // after writing to file clear Samples
+    void       computeMacroParticlesCount();            // compute number of macroparticles per cell
+    const      std::vector<Particle>& getConstPartRef() const;  //get constant reference to particle (following encapsulation principles)
+
 
     //for advance
     type_calc3 sampleReflectedVelocity(const type_calc3& pos, const type_calc len, const type_calc3& n) const;
     type_calc sampleVth(const type_calc T) const;
-    void sampleVthVariableMpw(const type_calc T, type_calc& set_vel, type_calc& set_mpw) const;
+    void sampleVthVariableMpw(const type_calc T, type_calc& set_vel, type_calc& set_mpw) const; //TODO implemet it and particle merge?
 
 };
 

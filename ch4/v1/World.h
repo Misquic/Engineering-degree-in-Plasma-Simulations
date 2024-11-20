@@ -68,11 +68,13 @@ public:
     type_calc3 getXm() const;
     type_calc3 getXc() const;
     type_calc getPE() const;
-    type_calc3 XtoL(type_calc3 x) const;   //converts position to logical coordinates
-    type_calc3 LtoX(type_calc3 lc) const;  //converts logical coordinates to position
-    type_calc3 LtoX(int3 lc) const;  //converts logical coordinates to position
+    type_calc3 XtoL(const type_calc3& x) const;   //converts position to logical coordinates
+    int3 XtoIJK(const type_calc3& x) const;   //converts position to indexes of cell
+    type_calc3 LtoX(const type_calc3& lc) const;  //converts logical coordinates to position
+    type_calc3 LtoX(const int3& lc) const;  //converts logical coordinates to position
     type_calc3 LtoX(int i, int j, int k) const;  //converts logical coordinates to position
     bool steadyState(std::vector<Species>& species);
+    bool steadyState() const;
 
     //type_calc3 getTs() const;
     void computeChargeDensity(std::vector<Species>& species);

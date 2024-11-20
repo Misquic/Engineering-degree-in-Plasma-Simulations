@@ -1,10 +1,18 @@
 #include "Source.h"
 
 Source::Source(Species& species, World& world, type_calc v_drift, type_calc den, std::string inlet_face_name) noexcept:
- sp{species}, world{world}, v_drift{v_drift}, den{den}, inlet_face_index{inletName2Index(inlet_face_name)}{
+ sp{species}, world{world}, v_drift{v_drift}, den{den}{
+    inlet_face_index = inletName2Index(inlet_face_name);
     if(inlet_face_index<0){
-        throw std::invalid_argument("inlet_face_index invlaid, value:" + inlet_face_name);
+        try{
+            throw std::invalid_argument("inlet_face_index invlaid, value:" + inlet_face_name);
+        }
+        catch(const std::invalid_argument& e){
+            std::cerr << e.what() << std::endl;
+            inlet_face_index = 0;
+        }
     }
+    
     dx = world.getDx();
     x0 = world.getX0();
     Lx = dx[0] * (world.ni-1);

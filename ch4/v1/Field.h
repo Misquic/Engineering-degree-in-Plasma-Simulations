@@ -34,7 +34,7 @@ public:
     /*methods*/
     std::string print() const;
     void clear();
-    void scatter(type_calc3 lc, type_calc val);
+    void scatter(type_calc3 lc, data_type val);
     data_type gather(type_calc3 lc) const;
     void updateAverage(const Field<data_type>& other);
     void updateMovingAverage(const Field<data_type>& other); //it's not a real moving average, just average from up to 21 samples but can have less samples.
@@ -67,6 +67,11 @@ public:
     void operator-=(const Field<data_type>& other);
     void operator*=(const Field<data_type>& other);
     void operator/=(const Field<data_type>& other);
+    /*fild-other_type field operators*/
+    template<class data_type2>
+    friend Field<data_type2> operator/(const Field<data_type2>& left, const Field<type_calc>& right);
+    // template<class data_type2>
+    // Field<data_type> operator/(const Field<data_type2>& other) const;
 
 
 };
@@ -103,7 +108,7 @@ Field<data_type>::Field(const Field<data_type>& other): ni{other.ni}, nj{other.n
 };
 template <class data_type>
 Field<data_type>::Field(Field<data_type>&& other): ni{other.ni}, nj{other.nj}, nk{other.nk}, nn{other.ni, other.nj, other.nk} {
-    std::cout << "moved\n";
+    //std::cout << "moved\n";
 
     if(!(this->data.empty())) this->data.clear();
     this->data = std::vector<std::vector<std::vector<data_type>>>(ni, std::vector<std::vector<data_type>>(nj, std::vector<data_type>(nk)));
@@ -143,10 +148,11 @@ std::string Field<data_type>::print() const{
 };
 template <class data_type>
 void Field<data_type>::clear(){
-    (*this) = 0;
+
+    (*this) = (data_type){};
 };
 template <class data_type> // in field because always used with fields
-void Field<data_type>::scatter(type_calc3 lc, type_calc val){
+void Field<data_type>::scatter(type_calc3 lc, data_type val){
     // if(lc[0] < 0 || lc[0] > ni-1 || lc[1] < 0 || lc[1] > nj-1 || lc[2] < 0 || lc[2] > nk-1){
     //     std::cerr << "scatter out of bands\n";
     //     return;
@@ -422,7 +428,7 @@ Field<data_type> Field<data_type>::operator-(const Field<data_type>& other) cons
     return ret;
 };
 template <class data_type>
-Field<data_type> Field<data_type>::operator*(const Field<data_type>& other) const { /*most likely not needed operator*/
+Field<data_type> Field<data_type>::operator*(const Field<data_type>& other) const {
     if (this->ni != other.ni || this->nj != other.nj || this->nk != other.nk) {
         throw std::invalid_argument("Dimensions of both fields must be the same for Field * Field.");
         return *this;
@@ -449,7 +455,12 @@ Field<data_type> Field<data_type>::operator/(const Field<data_type>& other) cons
     for(int i = 0; i < this->ni; i++){
         for(int j = 0; j < this->nj; j++){
             for(int k = 0; k < this->nk; k++){
-                ret.data[i][j][k] = this->data[i][j][k] / other.data[i][j][k];
+                if(other.data[i][j][k]!=0){
+                    ret.data[i][j][k] = this->data[i][j][k] / other.data[i][j][k];
+                }
+                else{
+                    ret.data[i][j][k] = 0;
+                }
             }
         }
     }
@@ -521,6 +532,54 @@ void Field<data_type>::operator/=(const Field<data_type>& other){
     }
 };
 
+/*field-other_type field operators*/
+template <class data_type2>
+Field<data_type2> operator/(const Field<data_type2>& left, const Field<type_calc>& other){
+    if (left.ni != other.ni || left.nj != other.nj || left.nk != other.nk) {
+        throw std::invalid_argument("Dimensions of both fields must be the same for Field<data_type> / Field<data_type2>.");
+        return left;
+    }
+
+    Field<data_type2> ret(left.ni, left.nj, left.nk);
+    for(int i = 0; i < left.ni; i++){
+        for(int j = 0; j < left.nj; j++){
+            for(int k = 0; k < left.nk; k++){
+                
+                if(other.data[i][j][k]!=0){
+                    ret.data[i][j][k] = left.data[i][j][k] / other.data[i][j][k];
+                }
+                else{
+                    ret.data[i][j][k] = 0;
+                }
+            }
+        }
+    }
+    return ret;
+};
+
+// template<class data_type>
+// template<class data_type2>
+// Field<data_type> Field<data_type>::operator/(const Field<data_type2>& other) const{
+//     if (this->ni != other.ni || this->nj != other.nj || this->nk != other.nk) {
+//         throw std::invalid_argument("Dimensions of both fields must be the same for Field<data_type> / Field<data_type2>.");
+//         return *this;
+//     }
+
+//     Field<data_type> ret(this->ni, this->nj, this->nk);
+//     for(int i = 0; i < this->ni; i++){
+//         for(int j = 0; j < this->nj; j++){
+//             for(int k = 0; k < this->nk; k++){
+//                 if(other.data[i][j][k]!=0){
+//                     ret.data[i][j][k] = this->data[i][j][k] / other.data[i][j][k];
+//                 }
+//                 else{
+//                     ret.data[i][j][k] = 0;
+//                 }
+//             }
+//         }
+//     }
+//     return ret;
+// };
 
 
 
