@@ -16,7 +16,7 @@ protected:
     World&   world;  //reference to world
     type_calc v_drift;  //mean drift velocity
     type_calc den;      // injection density
-    int inlet_face_index = -99;
+    int inlet_face_index = -1;
     //std::function<void()> sample_strategy;
 
     //precalc:

@@ -9,7 +9,8 @@ Particle::Particle(type_calc3 pos, type_calc3 vel, type_calc macro_weight) noexc
 
 /*Species constructors*/
 Species::Species(std::string name, type_calc mass, type_calc charge, World& world, type_calc mpw0): name{name}, mass{mass},
- charge{charge}, world{world}, mpw0{mpw0}, den{world.nn}, den_avg{world.nn} {
+ charge{charge}, world{world}, mpw0{mpw0}, den{world.nn}, den_avg{world.nn}, n_sum{world.nn}, nv_sum{world.nn}, nuu_sum{world.nn},
+ nvv_sum{world.nn}, nww_sum{world.nn}, T{world.nn}, vel{world.nn}, macro_part_count{world.ni -1, world.nj -1, world.nk-1} {
 };
 
 /*Species methods*/
@@ -122,7 +123,7 @@ void Species::advance(Species& neutrals, Species& spherium){//TODO change it so 
     // particles.erase(particles.begin() + np, particles.end());
 
 };
-void Species::computeNumberDensity(){
+void Species::computeNumberDensity(){ //to ommit doind this thice implement using n_sum
 
     den.clear();
     for(Particle& part : particles)
@@ -223,6 +224,8 @@ void Species::loadParticleBoxQS(type_calc3 x1, type_calc3 x2, type_calc num_den_
         }
     }
 };
+
+/*for diagnostics and outputs*/
 type_calc Species::getMicroCount(){ //inmplement somewhere else variable that tracks it so we dont count it every time?
     type_calc micro_count{};
     for(Particle& part : particles){
@@ -258,7 +261,68 @@ type_calc Species::getPE(){ //inmplement somewhere else variable that tracks it 
 void Species::updateAverages(){
     den_avg.updateMovingAverage(den);
 };
+void Species::sampleMoments(){
+    for(Particle& part: particles){ 
+        type_calc3 lc = world.XtoL(part.pos);
+        n_sum.scatter(lc, part.macro_weight); //WHY not clearing before?
+        nv_sum.scatter(lc, part.macro_weight*part.vel); //TODO check if type_calc -> data_type in scatter works correctly?????
+        nuu_sum.scatter(lc, part.macro_weight*part.vel[0]*part.vel[0]);
+        nvv_sum.scatter(lc, part.macro_weight*part.vel[1]*part.vel[1]);
+        nww_sum.scatter(lc, part.macro_weight*part.vel[2]*part.vel[2]);
+    }
+};
+void Species::computeGasProperties(){
+    vel = nv_sum/n_sum;
 
+    for(int i = 0; i < world.ni; i++){
+        for(int j = 0; j < world.nj; j++){
+            for(int k = 0; k < world.nk; k++){
+                type_calc count = n_sum[i][j][k];
+                if(count<=0){
+                    T[i][j][k] = 0;
+                    continue;
+                }
+                type_calc u_ave = vel[i][j][k][0];
+                type_calc v_ave = vel[i][j][k][1];
+                type_calc w_ave = vel[i][j][k][2];
+                type_calc u2_ave = nuu_sum[i][j][k]/count;
+                type_calc v2_ave = nvv_sum[i][j][k]/count;
+                type_calc w2_ave = nww_sum[i][j][k]/count;
+
+                type_calc uu = u2_ave - u_ave*u_ave;
+                type_calc vv = v2_ave - v_ave*v_ave;
+                type_calc ww = w2_ave - w_ave*w_ave;
+
+                T[i][j][k] = mass/(2*Const::k)*(uu + vv + ww);
+
+            }
+        }
+    }
+};
+void Species::clearSamples(){
+    n_sum.clear();
+    nv_sum.clear();
+    nuu_sum.clear();
+    nvv_sum.clear();
+    nww_sum.clear();
+
+};
+void Species::computeMacroParticlesCount(){
+    macro_part_count.clear();
+    for(Particle& part: particles){
+        int3 ijk = world.XtoIJK(part.pos);
+        macro_part_count[ijk[0]][ijk[1]][ijk[2]] += 1;
+    }
+};
+const std::vector<Particle>& Species::getConstPartRef() const{
+    return particles;
+};
+
+
+
+
+
+/*for advance*/
 type_calc3 Species::sampleReflectedVelocity(const type_calc3& pos, const type_calc v_mag1, const type_calc3& n) const{
     type_calc v_th = sampleVth(300); //pass Temperature, assuming here 300
     const type_calc a_th = 1; //thermal accommodation coefficient

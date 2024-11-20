@@ -90,19 +90,23 @@ type_calc World::getPE() const{
     }
     return 0.5*Const::eps_0*pe;
 };
-type_calc3 World::XtoL(type_calc3 x) const{ //L - length from begining
+type_calc3 World::XtoL(const type_calc3& x) const{ //L - length from begining
     type_calc3 lc = (x - x0)/dx;
 
     return lc; //in world coz x0 and dx used
 };
-type_calc3 World::LtoX(type_calc3 lc) const{ //converts logical coordinates to position
+int3 World::XtoIJK(const type_calc3& x) const{
+    type_calc3 lc = XtoL(x);
+    return {int(lc[0]), int(lc[1]), int(lc[2])};
+};
+type_calc3 World::LtoX(const type_calc3& lc) const{ //converts logical coordinates to position
 static type_calc3 ret{};
     for(int i = 0; i < 3; i++){
         ret[i] = x0[i] + lc[i] * dx[i];
     }
     return ret;
 };
-type_calc3 World::LtoX(int3 lc) const{ //converts logical coordinates to position
+type_calc3 World::LtoX(const int3& lc) const{ //converts logical coordinates to position
     return LtoX(type_calc3(lc[0], lc[1], lc[2]));
 };
 type_calc3 World::LtoX(int i, int j, int k) const{ //converts logical coordinates to position
@@ -127,6 +131,9 @@ bool World::steadyState(std::vector<Species>& species){
     last_mass = tot_mass;
     last_mom = tot_mom;
     last_en = tot_en;
+    return steady_state;
+};
+bool World::steadyState() const{
     return steady_state;
 };
 

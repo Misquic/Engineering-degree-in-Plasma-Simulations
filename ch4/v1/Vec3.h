@@ -37,7 +37,7 @@ public:
     const data_type& operator[](int i) const;
 
     /*Vec3-scalar operators*/
-    Vec3<data_type>& operator=(const data_type val) noexcept;
+    Vec3<data_type>& operator=(const data_type& val) noexcept;
     Vec3<data_type> operator+(const data_type val) const;
     Vec3<data_type> operator-(const data_type val) const;
     Vec3<data_type> operator*(const data_type val) const;
@@ -120,13 +120,14 @@ const data_type& Vec3<data_type>::operator[](int i) const {
 
 /*vec3-scalar operators*/
 template <class data_type>
-Vec3<data_type>& Vec3<data_type>::operator=(const data_type val) noexcept{
+Vec3<data_type>& Vec3<data_type>::operator=(const data_type& val) noexcept{
     for(int i = 0; i < 3; i++){
         data[i] = val;
     }
     return (*this); //nie było tego i było okej?
     
 };
+
 template <class data_type>
 Vec3<data_type> Vec3<data_type>::operator+(const data_type val) const{
     Vec3<data_type> ret(*this); /*probably faster than creating empty vec3 and then adding, other behaviour for field (i think so?)*/

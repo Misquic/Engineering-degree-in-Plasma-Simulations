@@ -5,6 +5,7 @@
 
 #files with data
 *.vti
+*.vtp
 *.csv
 
 #files for testing

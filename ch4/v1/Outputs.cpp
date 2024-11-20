@@ -7,6 +7,11 @@
 
 
 void Output::fields(World& world, std::vector<Species>& species, std::string name1){
+
+	for(Species& sp: species){
+		sp.computeGasProperties();
+	}
+
     std::stringstream name;
 	name<<"results/" << name1 << "fields_"<<std::setfill('0')<<std::setw(5)<<world.getTs()<<".vti";
     //name << "results/fields.vti";
@@ -69,6 +74,22 @@ void Output::fields(World& world, std::vector<Species>& species, std::string nam
 		out<<sp.den_avg;
 		out<<"</DataArray>\n";
 	}
+
+	/*species velocity stream*/
+	for (Species &sp : species)
+	{
+		out<<"<DataArray Name=\"vel."<<sp.name<<"\" NumberOfComponents=\"3\" format=\"ascii\" type=\"Float64\">\n";
+		out<<sp.vel;
+		out<<"</DataArray>\n";
+	}
+
+	/*species temperature*/
+	for (Species &sp : species)
+	{
+		out<<"<DataArray Name=\"T."<<sp.name<<"\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
+		out<<sp.T;
+		out<<"</DataArray>\n";
+	}
 	
 	/*electric field, 3 component vector*/
 	out<<"<DataArray Name=\"ef\" NumberOfComponents=\"3\" format=\"ascii\" type=\"Float64\">\n";
@@ -77,9 +98,26 @@ void Output::fields(World& world, std::vector<Species>& species, std::string nam
 	
 	/*close out tags*/
 	out<<"</PointData>\n";
+
+	/*cell data*/
+	out<<"<CellData>\n";
+
+	/*species macroparticle count per cell*/
+	for (Species &sp : species)
+	{
+		out<<"<DataArray Name=\"mpc."<<sp.name<<"\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
+		out<<sp.macro_part_count;
+		out<<"</DataArray>\n";
+	}
+
+	out<<"</CellData>\n";
 	out<<"</ImageData>\n";
 	out<<"</VTKFile>\n";
  	out.close();
+
+	/*clear samples if not steady state*/
+ 	if (!world.steadyState())
+ 		for (Species &sp:species) sp.clearSamples();
 };
 
 
@@ -161,4 +199,94 @@ void Output::convergence(int NR_it, int ts){
 		f_convergence<<"L2,PCG_it,ts,NR_it\n";
 	}
 	f_convergence<<","<<","<< ts << "," << NR_it << "\n";
+};
+
+void Output::particles(World& world, std::vector<Species>& species, int num_parts, std::string name1){
+		/*loop over all species*/
+
+	for (Species &sp:species) {
+
+		//open a phase_sp_it.vtp
+		std::stringstream name;
+		name<<"results/" << name1 <<"parts_"<<sp.name<<"_"<<std::setfill('0')<<std::setw(5)<<world.getTs()<<".vtp";
+
+		/*open output file*/
+		std::ofstream out(name.str());
+		if (!out.is_open()){
+			std::cerr<<"Could not open "<<name.str()<<std::endl;
+			return;
+		}
+
+		/*build a list of particles to output*/
+		double dp = num_parts/(double)sp.getNumParticles();
+		double counter = 0;
+		std::vector<const Particle*> to_output;
+		for (const Particle &part : sp.getConstPartRef())	{
+			counter+=dp;
+			if (counter>1) //save particle
+				{to_output.emplace_back(&part);counter=-1;}
+		}
+
+		/*header*/
+		out<<"<?xml version=\"1.0\"?>\n";
+		out<<"<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
+		out<<"<PolyData>\n";
+		out<<"<Piece NumberOfPoints=\""<<to_output.size()<<"\" NumberOfVerts=\"0\" NumberOfLines=\"0\" ";
+		out<<"NumberOfStrips=\"0\" NumberOfCells=\"0\">\n";
+
+		/*points*/
+		out<<"<Points>\n";
+		out<<"<DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+		for (const Particle *part: to_output)
+			out<<part->pos<<"\n";
+		out<<"</DataArray>\n";
+		out<<"</Points>\n";
+
+		/*velocities*/
+		out<<"<PointData>\n";
+		out<<"<DataArray Name=\"vel."<<sp.name<<"\" type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+		for (const Particle *part: to_output)
+			out<<part->vel<<"\n";
+		out<<"</DataArray>\n";
+		out<<"</PointData>\n";
+
+		out<<"</Piece>\n";
+		out<<"</PolyData>\n";
+		out<<"</VTKFile>\n";
+
+		out.close();
+	}
+
+	// for(Species& sp: species){
+	// 	int num_of_parts = sp.getNumParticles();
+	// 	std::stringstream name;
+	// 	name<<"results/" << name1 << "particles_" << sp.name << std::setfill('0')<<std::setw(5)<<world.getTs()<<".vti";
+
+	// 	std::ofstream out(name.str());
+	// 	if(!out.is_open()){
+	// 		std::cerr << "Could not open " << name.str() << std::endl;
+	// 		return;
+	// 	}
+	// 	if(num_of_parts != 0 && num_parts <= num_of_parts){
+	// 		/*list of particles to output*/ //doing my way, because in book is weird
+	// 		std::vector<std::unique_ptr<Particle>> to_output;
+	// 		to_output.reserve(num_parts);
+	// 		int step = num_of_parts/num_parts; //always rounding down, so num_of_outputted_parts will achive num_parts, before num_of_outputted_parts*step will achive sp.particles.size()-1
+	// 		int num_of_outputted_parts = 0;
+	// 		while(num_of_outputted_parts < num_parts){
+	// 			if(num_of_outputted_parts*step<num_of_parts){ //sp.getNumParticles returns sp.particles.size(), additional protection
+	// 				to_output.emplace_back(std::make_unique<Particle>(sp.getConstPartRef(num_of_outputted_parts*step)));
+	// 				out << num_of_outputted_parts*step << "\n";
+	// 			}
+	// 			num_of_outputted_parts++;
+	// 		}		
+			
+
+	// 		out << "step: " << step << " num_of_outputted_parts: " << num_of_outputted_parts;
+	// 	}
+	// 	out << " particles.size(): " << sp.getNumParticles();
+
+	// }
+
+
 };
