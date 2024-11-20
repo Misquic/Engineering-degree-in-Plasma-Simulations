@@ -54,6 +54,7 @@ public:
     Vec3<data_type> operator-(const Vec3<data_type>& other) const;
     data_type       operator*(const Vec3<data_type>& other) const;  //dot multiplication
     Vec3<data_type> operator/(const Vec3<data_type>& other) const;  //elementwise division
+    Vec3<data_type> elWiseMult(const Vec3<data_type>& other) const;  //elementwise multiplication
     void operator+=(const Vec3<data_type>& other);
     void operator-=(const Vec3<data_type>& other);
     void operator*=(const Vec3<data_type>& other) = delete;
@@ -239,6 +240,11 @@ Vec3<data_type> Vec3<data_type>::operator/(const Vec3<data_type>& other) const{ 
     }
     return ret;
 }; 
+template<class data_type>
+Vec3<data_type> Vec3<data_type>::elWiseMult(const Vec3<data_type>& other) const{  //elementwise multiplication
+    return {data[0]*other.data[0], data[1]*other.data[1], data[2]*other.data[2]};
+}; 
+
 
 template <class data_type>
 void Vec3<data_type>::operator+=(const Vec3<data_type>& other){

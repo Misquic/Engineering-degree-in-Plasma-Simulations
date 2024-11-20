@@ -79,6 +79,10 @@ type_calc3 World::getXm() const{
 type_calc3 World::getXc() const{
     return type_calc3(xc);
 };
+type_calc World::getCellVolume() const{
+    return dx[0]*dx[1]*dx[2];
+};
+
 type_calc World::getPE() const{
     type_calc pe{};
     for(int i = 0; i < ni; i++){
@@ -93,17 +97,18 @@ type_calc World::getPE() const{
 type_calc3 World::XtoL(const type_calc3& x) const{ //L - length from begining
     type_calc3 lc = (x - x0)/dx;
 
-    return lc; //in world coz x0 and dx used
+    return lc;
 };
 int3 World::XtoIJK(const type_calc3& x) const{
     type_calc3 lc = XtoL(x);
     return {int(lc[0]), int(lc[1]), int(lc[2])};
 };
 type_calc3 World::LtoX(const type_calc3& lc) const{ //converts logical coordinates to position
-static type_calc3 ret{};
+    type_calc3 ret{};
     for(int i = 0; i < 3; i++){
         ret[i] = x0[i] + lc[i] * dx[i];
     }
+    //type_calc3 ret = x0 + lc.elWiseMult(dx);
     return ret;
 };
 type_calc3 World::LtoX(const int3& lc) const{ //converts logical coordinates to position
@@ -318,6 +323,5 @@ int inletName2Index(std::string face_name){
         throw std::invalid_argument("Passed wrong face name.");
         return -1;
     }
-    std::cout << "face: " << faces[face_name] << "\n";
     return faces[face_name];
 };

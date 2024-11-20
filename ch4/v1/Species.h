@@ -67,12 +67,16 @@ public:
     void       computeGasProperties();                  // use sampled momentss to compute velocity and temperature
     void       clearSamples();                          // after writing to file clear Samples
     void       computeMacroParticlesCount();            // compute number of macroparticles per cell
-    const      std::vector<Particle>& getConstPartRef() const;  //get constant reference to particle (following encapsulation principles)
+
+    const std::vector<Particle>& getConstPartRef() const;  //get constant reference to particles (following encapsulation principles)
+    std::vector<Particle>& getPartRef();  //get constant reference to particles (following encapsulation principles)
+    const Particle& getConstPartRef(int i) const;          //get constant reference to particle (following encapsulation principles)
 
 
     //for advance
     type_calc3 sampleReflectedVelocity(const type_calc3& pos, const type_calc len, const type_calc3& n) const;
     type_calc sampleVth(const type_calc T) const;
+    type_calc3 sampleV3th(const type_calc T) const; 
     void sampleVthVariableMpw(const type_calc T, type_calc& set_vel, type_calc& set_mpw) const; //TODO implemet it and particle merge?
 
 };
