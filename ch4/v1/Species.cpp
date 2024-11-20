@@ -139,6 +139,7 @@ void Species::addParticle(type_calc x, type_calc y, type_calc z, type_calc u, ty
 };
 void Species::addParticle(type_calc3 pos, type_calc3 vel, type_calc macro_weight){
     if (!world.inBounds(pos)) return;
+    if(world.inObject(pos)) return;
 
     type_calc3 lc = world.XtoL(pos);
 
@@ -317,6 +318,12 @@ void Species::computeMacroParticlesCount(){
 const std::vector<Particle>& Species::getConstPartRef() const{
     return particles;
 };
+std::vector<Particle>& Species::getPartRef(){
+    return particles;
+}; 
+const Particle& Species::getConstPartRef(int i) const{
+    return particles[i];
+};
 
 
 
@@ -349,6 +356,14 @@ type_calc Species::sampleVth(const type_calc T) const{
     type_calc v2 = v_th * (rnd() + rnd() + rnd() - 1.5);
     type_calc v3 = v_th * (rnd() + rnd() + rnd() - 1.5);
     return std::sqrt(v1*v1 + v2*v2 + v3*v3);
+};
+type_calc3 Species::sampleV3th(const type_calc T) const{
+    type_calc v_th = sampleVth(T);
+    type_calc theta = 2*Const::pi*rnd(); // random isotropic direction
+    type_calc r = -1.0 + 2*rnd();
+    type_calc a = std::sqrt(1 - r*r);
+
+    return {v_th*r, v_th*(cos(theta)*a), v_th*(sin(theta)*a)};
 };
 
 void Species::sampleVthVariableMpw(const type_calc T, type_calc& set_vel, type_calc& set_mpw) const{

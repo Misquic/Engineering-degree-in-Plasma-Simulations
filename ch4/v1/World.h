@@ -67,6 +67,7 @@ public:
     type_calc3 getDx() const;
     type_calc3 getXm() const;
     type_calc3 getXc() const;
+    type_calc getCellVolume() const;
     type_calc getPE() const;
     type_calc3 XtoL(const type_calc3& x) const;   //converts position to logical coordinates
     int3 XtoIJK(const type_calc3& x) const;   //converts position to indexes of cell

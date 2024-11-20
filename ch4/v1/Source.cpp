@@ -107,14 +107,8 @@ void WarmBeamSource::setSampleStrategy() noexcept{ //TODO
             sample_strategy = [this](){
                 int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
                 for(int i = 0; i < num_macro; i++){
-                    type_calc v_th = sp.sampleVth(T);
-                    
-                    // random isotropic direction
-                    type_calc theta = 2*Const::pi*rnd();
-                    type_calc r = -1.0 + 2*rnd();
-                    type_calc a = std::sqrt(1 - r*r);
-
-                    type_calc3 vel(v_th*r + v_drift, v_th*(cos(theta)*a), v_th*(sin(theta)*a));  
+                    type_calc3 vel = sp.sampleV3th(T);
+                    vel[0] += v_drift;
 
                     sp.addParticle({x0[0], x0[1] + rnd()*Ly, x0[2] + rnd()*Lz}, vel, sp.mpw0);
                 }
@@ -124,14 +118,8 @@ void WarmBeamSource::setSampleStrategy() noexcept{ //TODO
             sample_strategy = [this](){
                 int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
                 for(int i = 0; i < num_macro; i++){
-                    type_calc v_th = sp.sampleVth(T);
-                    
-                    // random isotropic direction
-                    type_calc theta = 2*Const::pi*rnd();
-                    type_calc r = -1.0 + 2*rnd();
-                    type_calc a = std::sqrt(1 - r*r);
-
-                    type_calc3 vel(v_th*r - v_drift, v_th*(cos(theta)*a), v_th*(sin(theta)*a));  
+                    type_calc3 vel = sp.sampleV3th(T);
+                    vel[0] -= v_drift;
 
                     sp.addParticle({x0[0] + Lx, x0[1] + rnd()*Ly, x0[2] + rnd()*Lz}, vel, sp.mpw0);
                 }
@@ -141,14 +129,8 @@ void WarmBeamSource::setSampleStrategy() noexcept{ //TODO
             sample_strategy = [this](){
                 int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
                 for(int i = 0; i < num_macro; i++){
-                    type_calc v_th = sp.sampleVth(T);
-                    
-                    // random isotropic direction
-                    type_calc theta = 2*Const::pi*rnd();
-                    type_calc r = -1.0 + 2*rnd();
-                    type_calc a = std::sqrt(1 - r*r);
-
-                    type_calc3 vel(v_th*r, v_th*(cos(theta)*a) + v_drift, v_th*(sin(theta)*a));  
+                    type_calc3 vel = sp.sampleV3th(T);
+                    vel[1] += v_drift;
 
                     sp.addParticle({x0[0] + rnd()*Lx, x0[1], x0[2] + rnd()*Lz}, vel, sp.mpw0);
                 }
@@ -158,14 +140,8 @@ void WarmBeamSource::setSampleStrategy() noexcept{ //TODO
             sample_strategy = [this](){
                 int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
                 for(int i = 0; i < num_macro; i++){
-                    type_calc v_th = sp.sampleVth(T);
-                    
-                    // random isotropic direction
-                    type_calc theta = 2*Const::pi*rnd();
-                    type_calc r = -1.0 + 2*rnd();
-                    type_calc a = std::sqrt(1 - r*r);
-
-                    type_calc3 vel(v_th*r, v_th*(cos(theta)*a) - v_drift, v_th*(sin(theta)*a));  
+                    type_calc3 vel = sp.sampleV3th(T);
+                    vel[1] -= v_drift;
 
                     sp.addParticle({x0[0] + rnd()*Lx, x0[1] + Ly, x0[2] + rnd()*Lz}, vel, sp.mpw0);
                 }
@@ -175,14 +151,8 @@ void WarmBeamSource::setSampleStrategy() noexcept{ //TODO
             sample_strategy = [this](){
                 int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
                 for(int i = 0; i < num_macro; i++){
-                    type_calc v_th = sp.sampleVth(T);
-                    
-                    // random isotropic direction // should wrap this in function
-                    type_calc theta = 2*Const::pi*rnd();
-                    type_calc r = -1.0 + 2*rnd();
-                    type_calc a = std::sqrt(1 - r*r);
-
-                    type_calc3 vel(v_th*r, v_th*(cos(theta)*a), v_th*(sin(theta)*a) + v_drift );  
+                    type_calc3 vel = sp.sampleV3th(T);
+                    vel[2] += v_drift;
 
                     sp.addParticle({x0[0] + rnd()*Lx, x0[1] + rnd()*Ly, x0[2]}, vel, sp.mpw0);
                 }
@@ -192,14 +162,8 @@ void WarmBeamSource::setSampleStrategy() noexcept{ //TODO
             sample_strategy = [this](){
                 int num_macro = (int)(num_micro/sp.mpw0 + rnd());                
                 for(int i = 0; i < num_macro; i++){
-                    type_calc v_th = sp.sampleVth(T);
-                    
-                    // random isotropic direction
-                    type_calc theta = 2*Const::pi*rnd();
-                    type_calc r = -1.0 + 2*rnd();
-                    type_calc a = std::sqrt(1 - r*r);
-
-                    type_calc3 vel(v_th*r, v_th*(cos(theta)*a), v_th*(sin(theta)*a) - v_drift );  
+                    type_calc3 vel = sp.sampleV3th(T);
+                    vel[1] -= v_drift;
 
                     sp.addParticle({x0[0] + rnd()*Lx, x0[1] + rnd()*Ly, x0[2] + Lz}, vel, sp.mpw0);
                 }

@@ -124,7 +124,7 @@ void Output::fields(World& world, std::vector<Species>& species, std::string nam
 //writes information to the screen
 void Output::screenOutput(World &world, std::vector<Species> &species)
 {
-	std::cout<<"\r                                                                                \rts: "<<world.getTs();
+	std::cout<<"\r                                                                                                                 \rts: "<<world.getTs();
 	for (Species &sp:species)
 		std::cout<<std::setprecision(3)<<"\t "<<sp.name<<":"<<sp.getNumParticles()<< " ";
 	//std::cout<<std::endl;
@@ -201,11 +201,10 @@ void Output::convergence(int NR_it, int ts){
 	f_convergence<<","<<","<< ts << "," << NR_it << "\n";
 };
 
-void Output::particles(World& world, std::vector<Species>& species, int num_parts, std::string name1){
+void Output::particles(World& world, std::vector<Species>& species, int num_parts_to_output_base, std::string name1){
 		/*loop over all species*/
-
 	for (Species &sp:species) {
-
+		int num_parts_to_output = num_parts_to_output_base;
 		//open a phase_sp_it.vtp
 		std::stringstream name;
 		name<<"results/" << name1 <<"parts_"<<sp.name<<"_"<<std::setfill('0')<<std::setw(5)<<world.getTs()<<".vtp";
@@ -218,14 +217,39 @@ void Output::particles(World& world, std::vector<Species>& species, int num_part
 		}
 
 		/*build a list of particles to output*/
-		double dp = num_parts/(double)sp.getNumParticles();
-		double counter = 0;
-		std::vector<const Particle*> to_output;
-		for (const Particle &part : sp.getConstPartRef())	{
-			counter+=dp;
-			if (counter>1) //save particle
-				{to_output.emplace_back(&part);counter=-1;}
+		int num_of_parts = sp.getNumParticles();
+		std::vector<std::unique_ptr<Particle>> to_output;
+
+		if(num_of_parts != 0){
+			int step = num_of_parts/num_parts_to_output; //always rounding down, so num_of_outputted_parts will achive num_parts_to_output, before num_of_outputted_parts*step will achive sp.particles.size()-1
+			
+			if(num_parts_to_output > num_of_parts){
+				num_parts_to_output = num_of_parts;
+				step = 1;
+			}
+			/*list of particles to output*/ //doing my way, because in book is weird
+			
+			to_output.reserve(num_parts_to_output);
+			int num_of_outputted_parts = 0;
+
+			while(num_of_outputted_parts < num_parts_to_output){
+				if(num_of_outputted_parts*step<num_of_parts){ //sp.getNumParticles returns sp.particles.size(), additional protection
+					to_output.emplace_back(std::make_unique<Particle>(sp.getConstPartRef(num_of_outputted_parts*step)));
+					//out << num_of_outputted_parts*step << "\n";
+				}
+				num_of_outputted_parts++;
+			}	
 		}
+		// double dp = num_parts_to_output/(double)sp.getNumParticles();
+		// std::cout << sp.name << " " << dp << " " << sp.getNumParticles() << "\n";
+		// double counter = 0;
+		// std::vector<const Particle*> to_output;
+		// for (const Particle &part : sp.getConstPartRef())	{
+		// 	counter+=dp;
+		// 	if (counter>1){ //save particle
+		// 		to_output.emplace_back(&part);
+		// 		counter=-1;}
+		// }
 
 		/*header*/
 		out<<"<?xml version=\"1.0\"?>\n";
@@ -237,7 +261,8 @@ void Output::particles(World& world, std::vector<Species>& species, int num_part
 		/*points*/
 		out<<"<Points>\n";
 		out<<"<DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
-		for (const Particle *part: to_output)
+		// for (const Particle *part: to_output)
+		for (const std::unique_ptr<Particle>& part: to_output)
 			out<<part->pos<<"\n";
 		out<<"</DataArray>\n";
 		out<<"</Points>\n";
@@ -245,7 +270,8 @@ void Output::particles(World& world, std::vector<Species>& species, int num_part
 		/*velocities*/
 		out<<"<PointData>\n";
 		out<<"<DataArray Name=\"vel."<<sp.name<<"\" type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
-		for (const Particle *part: to_output)
+		// for (const Particle *part: to_output)
+		for (const std::unique_ptr<Particle>& part: to_output)
 			out<<part->vel<<"\n";
 		out<<"</DataArray>\n";
 		out<<"</PointData>\n";
@@ -258,7 +284,6 @@ void Output::particles(World& world, std::vector<Species>& species, int num_part
 	}
 
 	// for(Species& sp: species){
-	// 	int num_of_parts = sp.getNumParticles();
 	// 	std::stringstream name;
 	// 	name<<"results/" << name1 << "particles_" << sp.name << std::setfill('0')<<std::setw(5)<<world.getTs()<<".vti";
 
@@ -267,13 +292,14 @@ void Output::particles(World& world, std::vector<Species>& species, int num_part
 	// 		std::cerr << "Could not open " << name.str() << std::endl;
 	// 		return;
 	// 	}
-	// 	if(num_of_parts != 0 && num_parts <= num_of_parts){
+	// 	int num_of_parts = sp.getNumParticles();
+	// 	if(num_of_parts != 0 && num_parts_to_output <= num_of_parts){
 	// 		/*list of particles to output*/ //doing my way, because in book is weird
 	// 		std::vector<std::unique_ptr<Particle>> to_output;
-	// 		to_output.reserve(num_parts);
-	// 		int step = num_of_parts/num_parts; //always rounding down, so num_of_outputted_parts will achive num_parts, before num_of_outputted_parts*step will achive sp.particles.size()-1
+	// 		to_output.reserve(num_parts_to_output);
+	// 		int step = num_of_parts/num_parts_to_output; //always rounding down, so num_of_outputted_parts will achive num_parts_to_output, before num_of_outputted_parts*step will achive sp.particles.size()-1
 	// 		int num_of_outputted_parts = 0;
-	// 		while(num_of_outputted_parts < num_parts){
+	// 		while(num_of_outputted_parts < num_parts_to_output){
 	// 			if(num_of_outputted_parts*step<num_of_parts){ //sp.getNumParticles returns sp.particles.size(), additional protection
 	// 				to_output.emplace_back(std::make_unique<Particle>(sp.getConstPartRef(num_of_outputted_parts*step)));
 	// 				out << num_of_outputted_parts*step << "\n";

@@ -12,6 +12,7 @@
 #include "Object.h"
 #include "Source.h"
 #include "Rnd.h"
+#include "Interactions.h"
 
 /*tags: flow aroung a shape(sphere and quboid), shape inside, inlet, neuman elsewhere, Maxwellian velocity distribution*/
 int main(int argc, char* argv[] ){
@@ -36,6 +37,7 @@ int main(int argc, char* argv[] ){
     std::vector<std::unique_ptr<Source>> sources; //sources container
     std::unique_ptr<PotentialSolver> solver_ptr;
     std::unique_ptr<World> world_ptr;
+    std::vector<std::unique_ptr<Interaction>> interactions;
 
     if(parseArgument(args, "--i")){
         /*doesn't support Objects yet
@@ -87,6 +89,10 @@ int main(int argc, char* argv[] ){
         sources.emplace_back(std::make_unique<WarmBeamSource>(species[1], *world_ptr, 7000, 0.1*num_den_ions, T, inlet_Face)); //O++
         //sources.emplace_back(species[2], *world_ptr, 7000, num_den_neutrals); //O
         
+        /* Instantiate interactions*/
+        type_calc rate = 1e-4;
+        interactions.emplace_back(std::make_unique<ChemistryIonize>(species[3], species[4], *world_ptr, rate));
+
 
         /*Instantiate solver*/ 
         solver_ptr = std::make_unique<PotentialSolver>(*world_ptr, solver_max_it ,1e-4, static_cast<SolverType>(solver_type));  // Jeśli solver nie został zainicjalizowany
@@ -122,9 +128,11 @@ int main(int argc, char* argv[] ){
         for(std::unique_ptr<Source>& source: sources){
             source->sample();
         }
-        // for(WarmBeamSource& source: sources){
-        //     source.sample();
-        // }
+
+        for(std::unique_ptr<Interaction>& interaction: interactions){
+            interaction->apply(world_ptr->getDt());
+        }
+
         auto time_start = world_ptr->getWallTime();
         for(Species&  sp: species){
             sp.advance(neutrals, spherium);
@@ -146,7 +154,7 @@ int main(int argc, char* argv[] ){
         Output::diagOutput(*world_ptr, species);
         Output::screenOutput(*world_ptr, species);
         int ts = world_ptr->getTs();
-        if(ts%30 == 0 || world_ptr->isLastTimeStep()){ //|| (ts > 140 && ts < 160)){
+        if(ts%10 == 0 || world_ptr->isLastTimeStep()){ //|| (ts > 140 && ts < 160)){
             Output::fields(*world_ptr, species);
             Output::particles(*world_ptr, species, 10000);
             std::cout << "Time taken so far: " << world_ptr->getWallTime() << std::endl;
