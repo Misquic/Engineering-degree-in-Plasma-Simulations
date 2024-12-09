@@ -42,7 +42,7 @@ public:
     const int nn[3];       //number of nodes
     const int ni, nj, nk;  //number of nodes in individual directions
     const int nv;          //volume in nodes
-
+    
     //TODO take this to protected and add friends which use that Fields
     Field<type_calc>  phi;        //potential
     Field<type_calc>  rho;        //charge density
@@ -69,11 +69,12 @@ public:
     type_calc3 getXc() const;
     type_calc getCellVolume() const;
     type_calc getPE() const;
-    type_calc3 XtoL(const type_calc3& x) const;   //converts position to logical coordinates
-    int3 XtoIJK(const type_calc3& x) const;   //converts position to indexes of cell
-    type_calc3 LtoX(const type_calc3& lc) const;  //converts logical coordinates to position
-    type_calc3 LtoX(const int3& lc) const;  //converts logical coordinates to position
-    type_calc3 LtoX(int i, int j, int k) const;  //converts logical coordinates to position
+    type_calc3 XtoL(const type_calc3& x) const;    //converts position to logical coordinates
+    int3       XtoIJK(const type_calc3& x) const;  //converts position to indexes of cell
+    int        XtoC(const type_calc3& x) const;    //converts position to one dimentional index of cell
+    type_calc3 LtoX(const type_calc3& lc) const;   //converts logical coordinates to position
+    type_calc3 LtoX(const int3& lc) const;         //converts logical coordinates to position
+    type_calc3 LtoX(int i, int j, int k) const;    //converts logical coordinates to position
     bool steadyState(std::vector<Species>& species);
     bool steadyState() const;
 

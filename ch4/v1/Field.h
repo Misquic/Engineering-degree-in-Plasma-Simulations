@@ -639,7 +639,4 @@ std::ostream& operator<<(std::ostream &out, const Field<data_type> &field){
     }
     return out;
 };
-
-
-
 #endif
