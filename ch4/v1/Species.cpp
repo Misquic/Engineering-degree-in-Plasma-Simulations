@@ -25,7 +25,6 @@ void Species::advance(Species& neutrals, Species& spherium){//TODO change it so 
     type_calc3 lc{};
     type_calc3 ef_part{};
     
-    ////////////////////////////// BETTER FASTER STRONGER??? /////////////////////////////
     size_t np = particles.size();
 
     for(size_t p = 0; p < np; p++){
@@ -34,13 +33,13 @@ void Species::advance(Species& neutrals, Species& spherium){//TODO change it so 
 
         type_calc3 ef_part = world.ef.gather(lc);
 
-        part.vel += ef_part*(dt*charge/mass); /////////////////////////////save
+        part.vel += ef_part*(dt*charge/mass);
 
         type_calc t_reminding = 1;
         int n_bounces = 0;
         while(t_reminding > 0){
             if(++n_bounces > 20) {
-                particles[p] = std::move(particles[np-1]); //use std::move? this would result in problem with pointer?
+                particles[p] = std::move(particles[np-1]);
                 np--;
                 p--;
                 break;
@@ -389,5 +388,23 @@ void Species::sampleVthVariableMpw(const type_calc T, type_calc& set_vel, type_c
 
     set_vel = v;
     set_mpw = mpw;  
-}
+};
+
+//for sorting
+std::vector<std::vector<Particle*>> Species::sort_pointers(){
+    std::vector<std::vector<Particle*>> parts_in_cell((world.ni-1)*(world.nj-1)*(world.nk-1));
+    for(Particle& part: particles){
+        int c = world.XtoC(part.pos);
+        parts_in_cell[c].push_back(&part);
+    }
+    return parts_in_cell;
+};
+std::vector<std::vector<int>> Species::sort_indexes(){
+    std::vector<std::vector<int>> parts_in_cell((world.ni-1)*(world.nj-1)*(world.nk-1));
+    for(int p = 0; p < particles.size(); p++){
+        int c = world.XtoC(particles[c].pos);
+        parts_in_cell[c].push_back(p);
+    }
+    return parts_in_cell;
+};
 

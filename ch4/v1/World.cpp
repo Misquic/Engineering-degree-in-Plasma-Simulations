@@ -103,6 +103,10 @@ int3 World::XtoIJK(const type_calc3& x) const{
     type_calc3 lc = XtoL(x);
     return {int(lc[0]), int(lc[1]), int(lc[2])};
 };
+int World::XtoC(const type_calc3& x) const{;   //converts position to one dimentional index of cell
+    int3 indexes = XtoIJK(x);
+    return indexes[2]*(ni-1)*(nj-1) + indexes[1]*(ni-1) + indexes[0];
+}
 type_calc3 World::LtoX(const type_calc3& lc) const{ //converts logical coordinates to position
     type_calc3 ret{};
     for(int i = 0; i < 3; i++){

@@ -12,7 +12,7 @@ Source::Source(Species& species, World& world, type_calc v_drift, type_calc den,
             inlet_face_index = 0;
         }
     }
-    
+    // std::cout << "inlet face index: " << inlet_face_index << "\n";
     dx = world.getDx();
     x0 = world.getX0();
     Lx = dx[0] * (world.ni-1);

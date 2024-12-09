@@ -124,7 +124,7 @@ void Output::fields(World& world, std::vector<Species>& species, std::string nam
 //writes information to the screen
 void Output::screenOutput(World &world, std::vector<Species> &species)
 {
-	std::cout<<"\r                                                                                                                 \rts: "<<world.getTs();
+	std::cout<<"\r                                                                  \rts: "<<world.getTs();
 	for (Species &sp:species)
 		std::cout<<std::setprecision(3)<<"\t "<<sp.name<<":"<<sp.getNumParticles()<< " ";
 	//std::cout<<std::endl;

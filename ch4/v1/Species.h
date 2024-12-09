@@ -56,7 +56,6 @@ public:
     void loadParticleBox(type_calc3 x1, type_calc3 x2, type_calc num_den, type_calc num_macro);
     void loadParticleBoxQS(type_calc3 x1, type_calc3 x2, type_calc num_den, int3 num_macro);
 
-    
     /*for diagnostics and outputs*/
     type_calc  getMicroCount();                         // calculate and return all number of micro particles
     type_calc3 getMomentum();                           // calculate and return momentum
@@ -72,12 +71,15 @@ public:
     std::vector<Particle>& getPartRef();  //get constant reference to particles (following encapsulation principles)
     const Particle& getConstPartRef(int i) const;          //get constant reference to particle (following encapsulation principles)
 
-
     //for advance
     type_calc3 sampleReflectedVelocity(const type_calc3& pos, const type_calc len, const type_calc3& n) const;
     type_calc sampleVth(const type_calc T) const;
     type_calc3 sampleV3th(const type_calc T) const; 
     void sampleVthVariableMpw(const type_calc T, type_calc& set_vel, type_calc& set_mpw) const; //TODO implemet it and particle merge?
+
+    //for sorting
+    std::vector<std::vector<Particle*>> sort_pointers();
+    std::vector<std::vector<int>> sort_indexes();
 
 };
 
