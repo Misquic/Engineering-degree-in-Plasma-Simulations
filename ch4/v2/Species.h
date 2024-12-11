@@ -49,7 +49,7 @@ public:
 
     /*methods*/
     size_t getNumParticles() const;
-    void advance(Species& neutrals, Species& spherium);
+    void advance(Species& neutrals, Species& spherium, type_calc dt);
     void computeNumberDensity();
     void addParticle(type_calc x, type_calc y, type_calc z, type_calc u, type_calc v, type_calc w, type_calc macro_weight);
     void addParticle(type_calc3 pos, type_calc3 vel, type_calc macro_weight);
@@ -82,7 +82,7 @@ public:
 
     //for sorting
     std::vector<std::vector<Particle*>> sort_pointers();
-    std::vector<std::vector<std::unique_ptr<Particle>>> sort_pointers_unique();
+    //std::vector<std::vector<std::unique_ptr<Particle>>> sort_pointers_unique();
     std::vector<std::vector<int>> sort_indexes();
 
 };

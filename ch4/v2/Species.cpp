@@ -22,8 +22,7 @@ Species::Species(std::string name, type_calc mass, type_calc charge, World& worl
 size_t Species::getNumParticles() const{
     return particles.size();
 };
-void Species::advance(Species& neutrals, Species& spherium){//TODO change it so species take into account if its neutral or not? -> subclasses
-    type_calc dt = world.getDt();
+void Species::advance(Species& neutrals, Species& spherium, type_calc dt){//TODO change it so species take into account if its neutral or not? -> subclasses
     type_calc3 x0 = world.getX0();
     type_calc3 xm = world.getXm();
 
@@ -430,14 +429,14 @@ std::vector<std::vector<Particle*>> Species::sort_pointers(){
     }
     return parts_in_cell;
 };
-std::vector<std::vector<std::unique_ptr<Particle>>> Species::sort_pointers_unique(){
-    std::vector<std::vector<std::unique_ptr<Particle>>> parts_in_cell((world.ni-1)*(world.nj-1)*(world.nk-1));
-    for(Particle& part: particles){
-        int c = world.XtoC(part.pos);
-        parts_in_cell[c].push_back(std::make_unique<Particle>(&part));
-    }
-    return parts_in_cell;
-};
+// std::vector<std::vector<std::unique_ptr<Particle>>> Species::sort_pointers_unique(){ // doenst work?
+//     std::vector<std::vector<std::unique_ptr<Particle>>> parts_in_cell((world.ni-1)*(world.nj-1)*(world.nk-1));
+//     for(Particle& part: particles){
+//         int c = world.XtoC(part.pos);
+//         parts_in_cell[c].push_back(std::make_unique<Particle>(&part));
+//     }
+//     return parts_in_cell;
+// };
 std::vector<std::vector<int>> Species::sort_indexes(){
     std::vector<std::vector<int>> parts_in_cell((world.ni-1)*(world.nj-1)*(world.nk-1));
     for(int p = 0; p < particles.size(); p++){

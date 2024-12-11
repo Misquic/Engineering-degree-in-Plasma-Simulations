@@ -40,14 +40,14 @@ int main(int argc, char* argv[] ){
         /*Read arguments*/
         SolverType solver_type = parseArgument(args, "--s_type", SolverType::PCG);
         int solver_max_it = parseArgument(args, "--s_max_it", 1000); //or 2e4;
-        type_calc phi = parseArgument(args, "--phi", -600.0);
+        type_calc phi = parseArgument(args, "--phi", -1000.0);
 
 
         
         /*Instantiate World*/ 
-        world_ptr = std::make_unique<World>(21, 21, 41, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.2});
+        world_ptr = std::make_unique<World>(21, 21, 81, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.5});
         world_ptr ->setTimeStart(); //optional, use it where you want your start of Wall time
-        world_ptr->setTime(2e-11, 800);
+        world_ptr->setTime(2e-10, 1000);
 
         /*Instantiate objects*/ 
         world_ptr->addObject<Rectangle>(type_calc3(world_ptr->getXc()[0], world_ptr->getXc()[1], world_ptr->getX0()[2]),
@@ -73,7 +73,7 @@ int main(int argc, char* argv[] ){
 
         type_calc side_z = world_ptr->getXm()[2] - world_ptr->getX0()[2] - 0.1;
         species[0].loadParticleBoxThermal(world_ptr->getXc(), type_calc3(world_ptr->getL()[0]*0.3, world_ptr->getL()[1]*0.3, side_z), num_den_neutrals, T);
-        species[3].loadParticleBoxThermal(type_calc3{world_ptr->getXc()[0], world_ptr->getXc()[1], world_ptr->getX0()[2] + 0.04}, type_calc3(world_ptr->getDx()[0], world_ptr->getDx()[1], world_ptr->getDx()[2]), num_den_electrons, T);
+        species[3].loadParticleBoxThermal(type_calc3{world_ptr->getXc()[0], world_ptr->getXc()[1], world_ptr->getX0()[2] + 0.04}, type_calc3(world_ptr->getDx()[0], world_ptr->getDx()[1], world_ptr->getDx()[2]), num_den_electrons, 1000*T);
         
         /* Instantiate interactions*/
         type_calc rate_0_1 = 1e-2;
@@ -117,6 +117,7 @@ int main(int argc, char* argv[] ){
     Output::fields(*world_ptr, species);
 
     //world_ptr->setTimeStart();
+    type_calc dt = world_ptr->getDt();
     while(world_ptr->advanceTime()){
 
         for(std::unique_ptr<Source>& source: sources){
@@ -128,12 +129,25 @@ int main(int argc, char* argv[] ){
         }
 
         auto time_start = world_ptr->getWallTime();
-        for(Species&  sp: species){
-            sp.advance(neutral_oxygen, neutral_oxygen); //TODO correct it so for species neutrals refer to species neutrals
+        for(Species&  sp: species){//TODO correct it so for species neutrals refer to species neutrals
+            if(sp.name == electrons.name){ //implemented subcycling
+                sp.advance(neutral_oxygen, neutral_oxygen, dt);
+                // std::cout << "moved electrons ";
+            }
+            else if(sp.charge!= 0 && world_ptr->getTs()%10 == 0){
+                sp.advance(neutral_oxygen, neutral_oxygen, dt*10);
+                // std::cout << " moved ions ";
+            }
+            else if(world_ptr->getTs()%50 == 0){
+                sp.advance(neutral_oxygen, neutral_oxygen, dt*50);
+                // std::cout << " moved neutrals ";
+            }
             sp.computeNumberDensity();
             sp.sampleMoments();
             sp.computeMacroParticlesCount();
         }
+        std::cout << "\n";
+
 
         world_ptr->computeChargeDensity(species);
         solver_ptr->solve();
@@ -145,10 +159,10 @@ int main(int argc, char* argv[] ){
             }
         }
         
-        Output::diagOutput(*world_ptr, species);
+        //Output::diagOutput(*world_ptr, species);
         Output::screenOutput(*world_ptr, species);
         int ts = world_ptr->getTs();
-        if(ts%10 == 0 || world_ptr->isLastTimeStep()){ //|| (ts > 140 && ts < 160)){
+        if(ts%20 == 0 || world_ptr->isLastTimeStep()){ //|| (ts > 140 && ts < 160)){
             Output::fields(*world_ptr, species);
             //Output::particles(*world_ptr, species, 10000);
             std::cout << "Time taken so far: " << world_ptr->getWallTime() << std::endl;
@@ -156,7 +170,11 @@ int main(int argc, char* argv[] ){
         }
        
     }
-    std::cout << "Simulation took " << world_ptr->getWallTime() << " seconds." << std::endl;
+    if(world_ptr->getWallTime()>60){
+        std::cout << "Simulation took " << world_ptr->getWallTime()/60 << " seconds." << std::endl;
+    }else{
+        std::cout << "Simulation took " << world_ptr->getWallTime() << " seconds." << std::endl;
+    }
     return 0;
 }
 
