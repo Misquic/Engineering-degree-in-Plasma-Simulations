@@ -138,8 +138,10 @@ void ChemistryIonizeElectrons::apply(type_calc dt) noexcept{ //no electrons spec
 DSMC_MEX::DSMC_MEX(Species& species, World& world) noexcept: species1{species}, species2{species}, world{world}{ //FOR INTERACTION BETWEEN ONE SPECIES
         apply_strategy = [this](type_calc dt){applyOneSpecies(dt);};
 
-
         m_reduced = species1.mass*species2.mass/(species1.mass + species2.mass); //TODO SEE BIRD'S APPENDIX A
+        mass1 = species.mass;
+        mass2 = species.mass;
+        sum_mass = mass1 + mass2;
         dv = world.getCellVolume();
 		c[0] = 4.07e-10;
 		c[1] = 0.77;
@@ -154,6 +156,9 @@ DSMC_MEX::DSMC_MEX(Species& species1, Species& species2, World& world): species1
 
 
         m_reduced = species1.mass*species2.mass/(species1.mass + species2.mass); //TODO SEE BIRD'S APPENDIX A
+        mass1 = species1.mass;
+        mass2 = species2.mass;
+        sum_mass = mass1 + mass2;
         dv = world.getCellVolume();
 		c[0] = 4.07e-10;
 		c[1] = 0.77;
@@ -201,7 +206,7 @@ void DSMC_MEX::applyOneSpecies(type_calc dt) noexcept{ //FOR INTERACTION BETWEEN
 
             if(P > rnd()){
                 n_collisions++;
-                collide(parts[p1]->vel, parts[p2]->vel, species1.mass, species1.mass);
+                collide(parts[p1]->vel, parts[p2]->vel);
             }
         }
     }
@@ -244,7 +249,7 @@ void DSMC_MEX::applyTwoSpecies(type_calc dt) noexcept{ //FOR INTERACTION BETWEEN
 
             if(P > rnd()){
                 n_collisions++;
-                collide(parts1[p1]->vel, parts2[p2]->vel, species1.mass, species1.mass);
+                collide(parts1[p1]->vel, parts2[p2]->vel);
             }
         }
     }
@@ -254,8 +259,8 @@ void DSMC_MEX::applyTwoSpecies(type_calc dt) noexcept{ //FOR INTERACTION BETWEEN
     }
 }
 
-void DSMC_MEX::collide(type_calc3& vel1, type_calc3& vel2, type_calc mass1, type_calc mass2){ // TODO implement better collisionn, not random isotropic
-    type_calc3 cm = (mass1 * vel1 + mass2 * vel2)/(mass1 + mass2);
+void DSMC_MEX::collide(type_calc3& vel1, type_calc3& vel2){ // TODO implement better collisionn, not random isotropic
+    type_calc3 cm = (mass1 * vel1 + mass2 * vel2)/sum_mass;
 
     type_calc3 v_rel = vel1 - vel2;
     type_calc v_rel_mag = v_rel.length();
@@ -269,22 +274,31 @@ void DSMC_MEX::collide(type_calc3& vel1, type_calc3& vel2, type_calc mass1, type
     v_rel[1] = v_rel_mag * sin_ksi*std::cos(eps);
     v_rel[2] = v_rel_mag * sin_ksi*std::sin(eps);
 
-    vel1 = cm + mass2/(mass1 + mass2)*v_rel;
-    vel2 = cm - mass1/(mass1 + mass2)*v_rel;
+    vel1 = cm + mass2/sum_mass*v_rel;
+    vel2 = cm - mass1/sum_mass*v_rel;
 };
 
 ////////////////////////////////////// DSMC_IONISATION ///////////////////////////////////////////
 DSMC_MEX_IONIZATION::DSMC_MEX_IONIZATION(Species& neutrals, Species& ions, Species& electrons, World& world): neutrals{neutrals}, ions{ions},
- electrons{electrons}, world{world}{ //FOR INTERACTION BETWEEN ONE SPECIES
+ electrons{electrons}, world{world}{ //FOR INTERACTION BETWEEN NEUTRALS AND ELECTRONS
         if(neutrals.mpw0 != electrons.mpw0){
             throw std::invalid_argument("species must have the same macroparticle weight for this algorithm to work properly.");
         }
         if(!neutrals.E_ion || neutrals.E_ion < 0){
             throw std::invalid_argument("neutral species must have proper ionization energy E_ion (in Joules)");
         }
-        E_ion = neutrals.E_ion; //It should be scaled by mpw0 right?
+        if(neutrals.mpw0 < ions.mpw0){
+            std::cerr << "neutrals.mpw0: " << neutrals.mpw0 << " ions.mpw0: " << ions.mpw0;
+            throw std::invalid_argument("neutral species must have greater mpw0 than ions to prperly calculate number of ions to create during ionisation, best if neutrals.mpw0 = k*ions.mpw0, k in natural numbers");
+        }
+        E_ion_times_10 = 10*neutrals.E_ion; //It should be not scaled by mpw0 right?
         dv = world.getCellVolume();
         m_reduced = neutrals.mass*electrons.mass/(neutrals.mass + electrons.mass); //TODO SEE BIRD'S APPENDIX A
+        mass_neus = neutrals.mass;
+        mass_eles = electrons.mass;
+        sum_mass = mass_neus + mass_eles;
+        num_cells = (world.ni-1) * (world.nj -1) * (world.nk-1);
+
         c[0] = 1.016e-18;
         c[1] = 9.824e+00;
         c[2] = 6.175e+01;
@@ -296,9 +310,8 @@ DSMC_MEX_IONIZATION::DSMC_MEX_IONIZATION(Species& neutrals, Species& ions, Speci
 		// c[3] = std::tgamma(2.5-c[1]); //Gamma(5/2-w)
 };
 void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
-    std::vector<std::vector<std::unique_ptr<Particle>>> neutrals_in_cell = neutrals.sort_pointers_unique(); // array of array of particle pointers
-    std::vector<std::vector<std::unique_ptr<Particle>>> electrons_in_cell = electrons.sort_pointers_unique(); // array of array of particle pointers
-
+    std::vector<std::vector<Particle*>> neutrals_in_cell = neutrals.sort_pointers(); // array of array of particle pointers
+    std::vector<std::vector<Particle*>> electrons_in_cell = electrons.sort_pointers(); // array of array of particle pointers
 
     type_calc sigma_v_rel_max_temp = 0;
     type_calc mpw0 = neutrals.mpw0;
@@ -306,8 +319,6 @@ void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
     int n_collisions = 0;
     int n_ionizations = 0;
     
-    int num_cells = (world.ni-1) * (world.nj -1) * (world.nk-1);
-
     for(int c = 0; c < num_cells; c++){
         // std::vector<Particle*>& parts_neutrals = neutrals_in_cell[c];
         // std::vector<Particle*>& parts_electrons = electrons_in_cell[c];
@@ -318,21 +329,21 @@ void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
 
         type_calc n_groups_frac = 0.5 * np_neus * np_eles * mpw0 * sigma_v_rel_max * dt / dv;
         int n_groups = (int)(n_groups_frac + 0.5);
-        if(n_groups > np_neus){
+        if(n_groups > np_neus){ //cannot ionize more then it is aviable to ionize
             n_groups = np_neus-1;
         }
         //std::cout << "n_groups_frac: " << n_groups_frac << " ";
         for(int g = 0; g < n_groups; g++){
             //std::cout << "np_neus: " << np_neus << " np_eles: " << np_eles << "\n";
-            int p_neus = (int)(rnd()*np_neus);
-            while(neutrals_in_cell[c][p_neus]->macro_weight==0){
-                p_neus = (int)(rnd()*np_neus); 
+            // int p_neus = (int)(rnd()*np_neus); //sample random neutral particle
+            int p_neu = rnd(0,np_neus); //sample random neutral particle
+            while(neutrals_in_cell[c][p_neu]->macro_weight==0){
+                p_neu = rnd(0,np_neus); 
             }
 
-            int p_eles = (int)(rnd()*np_eles);
+            int p_ele = rnd(0,np_eles);
 
-            type_calc v_rel = (neutrals_in_cell[c][p_neus]->vel - electrons_in_cell[c][p_eles]->vel).length();
-
+            type_calc v_rel = (neutrals_in_cell[c][p_neu]->vel - electrons_in_cell[c][p_ele]->vel).length();
             type_calc sigma_v_rel = evaluateSigma(v_rel) * v_rel;
             if(sigma_v_rel > sigma_v_rel_max_temp) sigma_v_rel_max_temp = sigma_v_rel;
 
@@ -343,13 +354,13 @@ void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
             bool ionised = false;
             if(P > rnd()){
                 n_collisions++;
-                ionised = collide(neutrals_in_cell[c][p_neus]->vel, electrons_in_cell[c][p_eles]->vel, neutrals.mass, electrons.mass);
+                type_calc E_new_ele = 0;
+                collide(neutrals_in_cell[c][p_neu]->vel, electrons_in_cell[c][p_ele]->vel, ionised, E_new_ele);
                 if(ionised){
                     n_ionizations++;
-
-                    int ions_to_create = (int)(ions.mpw0/neutrals.mpw0 + rnd());
+                    int ions_to_create = (int)(neutrals.mpw0/ions.mpw0 + rnd()); //assuming neutrals.mpw0 >= ions.mpw0
                     for(int i = 0; i < ions_to_create; i++){
-                        ions.addParticle(neutrals_in_cell[c][p_neus]->pos, neutrals_in_cell[c][p_neus]->vel, ions.mpw0);
+                        ions.addParticle(neutrals_in_cell[c][p_neu]->pos, neutrals_in_cell[c][p_neu]->vel, ions.mpw0);
                     }
 
                     // type_calc3 v_rel = parts_neutrals[p_neus]->vel - parts_electrons[p_eles]->vel;
@@ -357,27 +368,30 @@ void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
                     // type_calc E_rel = 0.5 * neutrals.mass * v_rel_mag * v_rel_mag; //in Joules
                     //type_calc3 lc = world.XtoL(parts_neutrals[p_neus]->pos);
                     //type_calc T = electrons.T.gather(lc);
-                    electrons.addParticle(neutrals_in_cell[c][p_neus]->pos, electrons.sampleV3th(100), electrons.mpw0); // change it to random v3th?
+                    electrons.addParticle(neutrals_in_cell[c][p_neu]->pos, electrons.sampleV3th(100), electrons.mpw0); // change it to random v3th?
 
-                    neutrals_in_cell[c][p_neus]->macro_weight = 0;
-                    // if(p_neus != np_neus-1){
-                    //     neutrals_in_cell[c][p_neus] = std::move(neutrals_in_cell[c][np_neus-1]);
-                    // }
-                    // np_neus--;
+                    neutrals_in_cell[c][p_neu]->macro_weight = 0; //mark nuetral to kill
+                    if(p_neu != np_neus-1){
+                        neutrals_in_cell[c][p_neu] = std::move(neutrals_in_cell[c][np_neus-1]); //kill ionised neutral in cell
+                    }
+                    np_neus--;
                 }
             }
         }
     }
-    std::vector<Particle>& particles = neutrals.getPartRef();
-    int np = particles.size();
-    for(int p = 0; p < np; p++){
-        if(!particles[p].macro_weight){
-            particles[p] = std::move(particles[np-1]);
-            p--;
-            np--;
+    if(n_collisions){
+        std::vector<Particle>& particles = neutrals.getPartRef(); //change it to acces only ones to kill
+        int np = particles.size();
+        for(int p = 0; p < np; p++){
+            if(particles[p].macro_weight == 0){
+                particles[p] = std::move(particles[np-1]);
+                p--;
+                np--;
+            }
         }
+        particles.erase(particles.begin() + np, particles.end());
     }
-    particles.erase(particles.begin() + np, particles.end());
+    
     
     std::cerr << "n_collisions: " << n_collisions << " n_ionizations: " << n_ionizations << "\n";
     if(n_collisions){
@@ -387,13 +401,23 @@ void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
 type_calc DSMC_MEX_IONIZATION::evaluateSigma(type_calc v_rel){
     type_calc E = 0.5 * neutrals.mass * v_rel * v_rel / Const::q_e;
     // type_calc E = 0.5 * electrons.mass * v_rel * v_rel;
-    return 1e14*c[0] * std::log(E/c[1])/E*std::exp(-c[2]/E); //fit to data obtained via LXcat Source: RBEQ Fit to [Brook et al. J. Phys. B: At. Mol. Phys. 11, 3115 (1978)], [Rothe et al. Phys. Rev. 125, 582 (1962)], [Zipf, Planet Space Sci 33, 1303 (1985)], [Thompson et al. J. Phys. B: At. Mol. Opt. Phys. 28, 1321 (1995)]. Updated: 3 January 2024.
+    return 1e9*c[0] * std::log(E/c[1])/E*std::exp(-c[2]/E); //fit to data obtained via LXcat Source: RBEQ Fit to [Brook et al. J. Phys. B: At. Mol. Phys. 11, 3115 (1978)], [Rothe et al. Phys. Rev. 125, 582 (1962)], [Zipf, Planet Space Sci 33, 1303 (1985)], [Thompson et al. J. Phys. B: At. Mol. Opt. Phys. 28, 1321 (1995)]. Updated: 3 January 2024.
 };
-bool DSMC_MEX_IONIZATION::collide(type_calc3& vel1, type_calc3& vel2, type_calc mass1, type_calc mass2){
-    type_calc3 cm = (mass1 * vel1 + mass2 * vel2)/(mass1 + mass2);
+void DSMC_MEX_IONIZATION::collide(type_calc3& vel1, type_calc3& vel2, bool& ionize, type_calc& E_new){
+    type_calc3 cm = (mass_neus * vel1 + mass_eles * vel2)/sum_mass;
 
     type_calc3 v_rel = vel1 - vel2;
     type_calc v_rel_mag = v_rel.length();
+
+    // type_calc E_ele1 = 0.5 * mass_eles * vel2.length() * vel2.length();
+    type_calc E_rel = 0.5 * m_reduced * v_rel_mag * v_rel_mag; //in Joules //guess, not physically checked!
+    if(E_rel > E_ion_times_10){
+        E_new = E_rel - E_ion_times_10; // 10* is more phisycally sensible? it means that electron really escapes atom and doesnt feel atoms infuence
+        ionize = true;
+    }
+    else{
+        ionize = false;
+    }
 
     type_calc cos_ksi = 2*rnd() - 1;
     type_calc sin_ksi = std::sqrt(1-cos_ksi*cos_ksi);
@@ -404,14 +428,14 @@ bool DSMC_MEX_IONIZATION::collide(type_calc3& vel1, type_calc3& vel2, type_calc 
     v_rel[1] = v_rel_mag * sin_ksi*std::cos(eps);
     v_rel[2] = v_rel_mag * sin_ksi*std::sin(eps);
 
-    vel1 = cm + mass2/(mass1 + mass2)*v_rel;
-    vel2 = cm - mass1/(mass1 + mass2)*v_rel;
+    vel1 = cm + mass_eles/sum_mass*v_rel;
+    vel2 = cm - mass_neus/sum_mass*v_rel;
+    // type_calc E_ele2 = 0.5 * mass_eles * vel2.length() * vel2.length();
 
-    type_calc E_rel = 0.5 * mass1 * v_rel_mag * v_rel_mag; //in Joules
-    //std::cout << " E_rel: " << E_rel << " E_ion: " << E_ion << "\n";
+    // if(rnd() < 0.01){
+    //     std::cout << "E_ele1: " << E_ele1 <<  " E_ele2: " << E_ele2 << " E_rel: " << E_rel << " E_ion: " << E_ion_times_10/10 << "\n";
+    // }
     // type_calc E_rel = 0.5 * mass2 * v_rel_mag * v_rel_mag; //in Joules // TRY!!
-    type_calc P = E_rel/E_ion;
-    if(E_rel > E_ion) return true;
-    return false;
+
 };
 
