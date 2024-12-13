@@ -40,12 +40,12 @@ int main(int argc, char* argv[] ){
         /*Read arguments*/
         SolverType solver_type = parseArgument(args, "--s_type", SolverType::PCG);
         int solver_max_it = parseArgument(args, "--s_max_it", 1000); //or 2e4;
-        type_calc phi = parseArgument(args, "--phi", -1000.0);
+        type_calc phi = parseArgument(args, "--phi", -100.0);
 
 
         
         /*Instantiate World*/ 
-        world_ptr = std::make_unique<World>(21, 21, 81, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.5}); //0.1cm x 0.11cm x 0.5 cm
+        world_ptr = std::make_unique<World>(21, 21, 81, type_calc3{-0.001, -0.001, 0.0}, type_calc3{0.001, 0.001, 0.0005}); //0.1cm x 0.11cm x 0.5 cm
         world_ptr ->setTimeStart(); //optional, use it where you want your start of Wall time
         world_ptr->setTime(2e-10, 1000);
 
@@ -70,12 +70,11 @@ int main(int argc, char* argv[] ){
         const type_calc num_den_ions = 1e10; //mean ion density
         const type_calc num_den_electrons = 1e15; //mean electron density
         type_calc T = 300;
-        type_calc T_eles = 1000*T;
 
         type_calc side_z = world_ptr->getXm()[2] - world_ptr->getX0()[2] - 0.1;
         // ZROBIC dodać więcej czynników do samplowania prędkości i sprawdzić czy to pomaga
         species[0].loadParticleBoxThermal(world_ptr->getXc(), type_calc3(world_ptr->getL()[0]*0.3, world_ptr->getL()[1]*0.3, side_z), num_den_neutrals, T);
-        species[3].loadParticleBoxThermal(type_calc3{world_ptr->getXc()[0], world_ptr->getXc()[1], world_ptr->getX0()[2] + 0.04}, type_calc3(world_ptr->getDx()[0], world_ptr->getDx()[1], world_ptr->getDx()[2]), num_den_electrons, T_eles);
+        species[3].loadParticleBoxThermal(type_calc3{world_ptr->getXc()[0], world_ptr->getXc()[1], world_ptr->getX0()[2] + 0.04}, type_calc3(world_ptr->getDx()[0], world_ptr->getDx()[1], world_ptr->getDx()[2]), num_den_electrons, 1000*T);
         
         /* Instantiate interactions*/
         type_calc rate_0_1 = 1e-2;
@@ -91,7 +90,7 @@ int main(int argc, char* argv[] ){
 
         /*Instantiate solver*/ 
         solver_ptr = std::make_unique<PotentialSolver>(*world_ptr, solver_max_it ,1e-4, static_cast<SolverType>(solver_type));  // Jeśli solver nie został zainicjalizowany
-        solver_ptr->setReferenceValues(0, 1.5, T_eles);
+        solver_ptr->setReferenceValues(0, 1.5, num_den_ions);
 
         std::cout << "Solver Type: " << solver_type << "\n";
 	    std::cout << "GS Solver max iterations: " << solver_ptr->get_GS_max_it() <<"\n";
@@ -144,7 +143,6 @@ int main(int argc, char* argv[] ){
                 sp.advance(neutral_oxygen, neutral_oxygen, dt*50);
                 // std::cout << " moved neutrals ";
             }
-            // sp.advance(neutral_oxygen, neutral_oxygen, dt); //normal
             sp.computeNumberDensity();
             sp.sampleMoments();
             sp.computeMacroParticlesCount();
@@ -174,7 +172,7 @@ int main(int argc, char* argv[] ){
        
     }
     if(world_ptr->getWallTime()>60){
-        std::cout << "Simulation took " << world_ptr->getWallTime()/60 << " minutes." << std::endl;
+        std::cout << "Simulation took " << world_ptr->getWallTime()/60 << " seconds." << std::endl;
     }else{
         std::cout << "Simulation took " << world_ptr->getWallTime() << " seconds." << std::endl;
     }

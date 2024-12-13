@@ -24,6 +24,7 @@ send/
 #folders with data for debugging
 results_old/
 results_debug/
+results_save_discharge_44mins/
 
 #folders with vscode config
 .vscode/
@@ -31,5 +32,9 @@ results_debug/
 #folders for building app
 build/
 build_debug/
+
+#folders for ares
+ares_scripts/
+
 
 
