@@ -405,7 +405,7 @@ void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
 type_calc DSMC_MEX_IONIZATION::evaluateSigma(type_calc v_rel){
     type_calc E = 0.5 * neutrals.mass * v_rel * v_rel / Const::q_e;
     // type_calc E = 0.5 * electrons.mass * v_rel * v_rel;
-    return 1e10*c[0] * std::log(E/c[1])/E*std::exp(-c[2]/E); //fit to data obtained via LXcat Source: RBEQ Fit to [Brook et al. J. Phys. B: At. Mol. Phys. 11, 3115 (1978)], [Rothe et al. Phys. Rev. 125, 582 (1962)], [Zipf, Planet Space Sci 33, 1303 (1985)], [Thompson et al. J. Phys. B: At. Mol. Opt. Phys. 28, 1321 (1995)]. Updated: 3 January 2024.
+    return 1e9*c[0] * std::log(E/c[1])/E*std::exp(-c[2]/E); //fit to data obtained via LXcat Source: RBEQ Fit to [Brook et al. J. Phys. B: At. Mol. Phys. 11, 3115 (1978)], [Rothe et al. Phys. Rev. 125, 582 (1962)], [Zipf, Planet Space Sci 33, 1303 (1985)], [Thompson et al. J. Phys. B: At. Mol. Opt. Phys. 28, 1321 (1995)]. Updated: 3 January 2024.
 };
 void DSMC_MEX_IONIZATION::collide(type_calc3& vel1, type_calc3& vel2, bool& ionize, type_calc& E_new){
     type_calc3 cm = (mass_neus * vel1 + mass_eles * vel2)/sum_mass;
