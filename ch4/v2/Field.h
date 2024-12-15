@@ -167,15 +167,32 @@ void Field<data_type>::scatter(type_calc3 lc, data_type val){
     type_calc one_di = 1 - di;
     type_calc one_dj = 1 - dj;
     type_calc one_dk = 1 - dk;
+    data_type v_one_di_one_dj = val * one_di * one_dj;
+    data_type v_one_dj_dj = val * one_di * dj;
+    data_type v_di_one_dj = val * di * one_dj;
+    data_type v_di_dj = val * di * dj;
+    std::vector<data_type>& data_ij = data[i][j];
+    std::vector<data_type>& data_ij1 = data[i][j+1];
+    std::vector<data_type>& data_i1j = data[i+1][j];
+    std::vector<data_type>& data_i1j1 = data[i+1][j+1];
 
-    data[i][j][k]       += (data_type)val * (one_di) * (one_dj) * (one_dk);
-    data[i][j][k+1]     += (data_type)val * (one_di) * (one_dj) * (dk);
-    data[i][j+1][k]     += (data_type)val * (one_di) * (dj)     * (one_dk);
-    data[i][j+1][k+1]   += (data_type)val * (one_di) * (dj)     * (dk);
-    data[i+1][j][k]     += (data_type)val * (di)     * (one_dj) * (one_dk);
-    data[i+1][j][k+1]   += (data_type)val * (di)     * (one_dj) * (dk);
-    data[i+1][j+1][k]   += (data_type)val * (di)     * (dj)     * (one_dk);
-    data[i+1][j+1][k+1] += (data_type)val * (di)     * (dj)     * (dk);
+    // data[i][j][k]       += (data_type)val * (one_di) * (one_dj) * (one_dk);
+    // data[i][j][k+1]     += (data_type)val * (one_di) * (one_dj) * (dk);
+    // data[i][j+1][k]     += (data_type)val * (one_di) * (dj)     * (one_dk);
+    // data[i][j+1][k+1]   += (data_type)val * (one_di) * (dj)     * (dk);
+    // data[i+1][j][k]     += (data_type)val * (di)     * (one_dj) * (one_dk);
+    // data[i+1][j][k+1]   += (data_type)val * (di)     * (one_dj) * (dk);
+    // data[i+1][j+1][k]   += (data_type)val * (di)     * (dj)     * (one_dk);
+    // data[i+1][j+1][k+1] += (data_type)val * (di)     * (dj)     * (dk);
+
+    data_ij[k]       += v_one_di_one_dj * one_dk;
+    data_ij[k+1]     += v_one_di_one_dj * dk;
+    data_ij1[k]     += v_one_dj_dj     * one_dk;
+    data_ij1[k+1]   += v_one_dj_dj     * dk;
+    data_i1j[k]     += v_di_one_dj     * one_dk;
+    data_i1j[k+1]   += v_di_one_dj     * dk;
+    data_i1j1[k]   += v_di_dj         * one_dk;
+    data_i1j1[k+1] += v_di_dj         * dk;
     
 };
 template <class data_type>
@@ -192,15 +209,23 @@ data_type Field<data_type>::gather(type_calc3 lc) const{
     type_calc one_dj = 1 - dj;
     type_calc one_di = 1 - di;
     type_calc one_dk = 1 - dk;
+    type_calc one_di_one_dj = one_di * one_dj;
+    type_calc one_dj_dj = one_di * dj;
+    type_calc di_one_dj = di * one_dj;
+    type_calc di_dj = di * dj;
+    const std::vector<data_type>& data_ij = data[i][j];
+    const std::vector<data_type>& data_ij1 = data[i][j+1];
+    const std::vector<data_type>& data_i1j = data[i+1][j];
+    const std::vector<data_type>& data_i1j1 = data[i+1][j+1];
 
-    val = data[i][j][k] * one_di * one_dj * one_dk +
-          data[i][j][k+1] * (one_di) * (one_dj) * (dk) + 
-          data[i][j+1][k] * (one_di) * (dj) * (one_dk) + 
-          data[i][j+1][k+1] * (one_di) * (dj) * (dk) + 
-          data[i+1][j][k] * (di) * (one_dj) * (one_dk) + 
-          data[i+1][j][k+1] * (di) * (one_dj) * (dk) + 
-          data[i+1][j+1][k] * (di) * (dj) * (one_dk) + 
-          data[i+1][j+1][k+1] * (di) * (dj) * (dk);
+    val = data_ij[k] * one_di_one_dj * one_dk +
+          data_ij[k+1] * one_di_one_dj * dk + 
+          data_ij1[k] * one_dj_dj * one_dk + 
+          data_ij1[k+1] * one_dj_dj * dk + 
+          data_i1j[k] * di_one_dj * one_dk + 
+          data_i1j[k+1] * di_one_dj * dk + 
+          data_i1j1[k] * di_dj * one_dk + 
+          data_i1j1[k+1] * di_dj * dk;
     return val;
 };
 template <class data_type>

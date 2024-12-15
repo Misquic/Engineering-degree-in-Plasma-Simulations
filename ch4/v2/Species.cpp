@@ -1,6 +1,7 @@
 #include "Species.h"
 #include "Rnd.h"
 
+
 /*Particle constructors*/
 Particle::Particle(type_calc x, type_calc y, type_calc z, type_calc u, type_calc v, type_calc w, type_calc macro_weight) noexcept: pos{x, y, z}, vel{u, v, w}, macro_weight{macro_weight} {
 };
@@ -11,10 +12,12 @@ Particle::Particle(type_calc3 pos, type_calc3 vel, type_calc macro_weight) noexc
 Species::Species(std::string name, type_calc mass, type_calc charge, World& world, type_calc mpw0): name{name}, mass{mass},
  charge{charge}, world{world}, mpw0{mpw0}, den{world.nn}, den_avg{world.nn}, n_sum{world.nn}, nv_sum{world.nn}, nuu_sum{world.nn},
  nvv_sum{world.nn}, nww_sum{world.nn}, T{world.nn}, vel{world.nn}, macro_part_count{world.ni -1, world.nj -1, world.nk-1} {
+    sorted_particles_pointers.reserve((world.ni-1)*(world.nj-1)*(world.nk-1));
 };
 Species::Species(std::string name, type_calc mass, type_calc charge, World& world, type_calc mpw0, type_calc E_ion): name{name}, mass{mass},
  charge{charge}, world{world}, mpw0{mpw0}, E_ion{E_ion}, den{world.nn}, den_avg{world.nn}, n_sum{world.nn}, nv_sum{world.nn}, nuu_sum{world.nn},
  nvv_sum{world.nn}, nww_sum{world.nn}, T{world.nn}, vel{world.nn}, macro_part_count{world.ni -1, world.nj -1, world.nk-1} {
+    sorted_particles_pointers.reserve((world.ni-1)*(world.nj-1)*(world.nk-1));
 };
 
 
@@ -422,27 +425,81 @@ void Species::sampleVthVariableMpw(const type_calc T, type_calc& set_vel, type_c
 
 //for sorting
 std::vector<std::vector<Particle*>> Species::sort_pointers(){
-    std::vector<std::vector<Particle*>> parts_in_cell((world.ni-1)*(world.nj-1)*(world.nk-1));
+    std::vector<std::vector<Particle*>> parts_in_cell(world.num_cells);
     for(Particle& part: particles){
         int c = world.XtoC(part.pos);
         parts_in_cell[c].push_back(&part);
     }
     return parts_in_cell;
 };
-// std::vector<std::vector<std::unique_ptr<Particle>>> Species::sort_pointers_unique(){ // doenst work?
-//     std::vector<std::vector<std::unique_ptr<Particle>>> parts_in_cell((world.ni-1)*(world.nj-1)*(world.nk-1));
-//     for(Particle& part: particles){
-//         int c = world.XtoC(part.pos);
-//         parts_in_cell[c].push_back(std::make_unique<Particle>(&part));
-//     }
-//     return parts_in_cell;
-// };
 std::vector<std::vector<int>> Species::sort_indexes(){
-    std::vector<std::vector<int>> parts_in_cell((world.ni-1)*(world.nj-1)*(world.nk-1));
-    for(int p = 0; p < particles.size(); p++){
-        int c = world.XtoC(particles[c].pos);
+    std::vector<std::vector<int>> parts_in_cell(world.num_cells);
+    for(int p = 0; p < world.num_cells; p++){
+        int c = world.XtoC(particles[p].pos);
         parts_in_cell[c].push_back(p);
     }
     return parts_in_cell;
+};
+void Species::sort_indexes(std::vector<std::vector<int>>& parts_in_cell){
+
+    for(int p = 0; p < world.num_cells; p++){
+        int c = world.XtoC(particles[p].pos);
+        parts_in_cell[c].push_back(p);
+    }
+};
+
+// std::unordered_map<int, std::vector<int>> Species::map_indexes(){
+//     std::unordered_map<int, std::vector<int>> map_particles_in_cell(world.num_cells);
+
+//     for(int c=0; c < world.num_cells; c++){ //is it worth for performance?
+//         int3 ijk = world.CtoIJK(c);
+//         int num_parts_in_cell = macro_part_count[ijk[0]][ijk[1]][ijk[2]];
+//         if(num_parts_in_cell > 0){
+//             map_particles_in_cell[c].reserve(num_parts_in_cell);
+//         }
+//     }
+
+//     for(int p = 0; p < particles.size(); p++){
+//         int c = world.XtoC(particles[c].pos);
+//         map_particles_in_cell[c].push_back(p);
+//     }
+//     return map_particles_in_cell;
+// };
+void Species::map_indexes(std::unordered_map<int, std::vector<int>>& map_particles_in_cell){ //efficient if most cells are empty
+
+    for(int c=0; c < world.num_cells; c++){ //is it worth for performance? it is with next sorting so there are only rare maps
+        int3 ijk = world.CtoIJK(c);
+        int num_parts_in_cell = macro_part_count[ijk[0]][ijk[1]][ijk[2]];
+        if(!num_parts_in_cell) continue;
+        if(num_parts_in_cell > map_particles_in_cell[c].capacity()){
+            map_particles_in_cell[c].reserve(num_parts_in_cell); //reserve estimated number of particles (equal if no source works)
+        }
+    }
+
+    for(int p = 0; p < particles.size(); p++){
+        int c = world.XtoC(particles[p].pos);
+        map_particles_in_cell[c].push_back(p);
+    }
+};
+void Species::map_indexes(std::unordered_map<int, std::vector<int>>& map_new_particles_in_cell, std::unordered_map<int, std::vector<int>>& already_mapped_other_species_particles){
+    for(const std::pair<int, std::vector<int>> pair: already_mapped_other_species_particles){
+        int c = pair.first;
+        int3 ijk = world.CtoIJK(c);
+        int num_parts_in_cell = macro_part_count[ijk[0]][ijk[1]][ijk[2]];
+        if(!num_parts_in_cell){
+            //already_mapped_other_species_particles.erase(c); cannot do it during 
+            continue;
+        }
+        if(num_parts_in_cell > map_new_particles_in_cell[c].capacity()){
+            map_new_particles_in_cell[c].reserve(num_parts_in_cell); //reserve estimated number of particles (equal if no source works)
+        }
+    }
+    auto end = map_new_particles_in_cell.end();
+    for(int p = 0; p < particles.size(); p++){
+        int c = world.XtoC(particles[p].pos);
+        if(map_new_particles_in_cell.find(c)!=end){
+            map_new_particles_in_cell[c].push_back(p);
+        }
+    }
 };
 

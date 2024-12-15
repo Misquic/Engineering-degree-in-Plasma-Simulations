@@ -4,10 +4,13 @@
 void print_help(){
     int w = 15;
     std::cout << "commands:\n\t"
-              << std::left <<  std::setw(w) << "--help: " << "display this help\n\t"
+              << std::left << std::setw(w) << "--help: " << "display this help\n\t"
+              << std::left << std::setw(w) << "--subcycling: " << "set use of subcycling true/false\n\t"
               << std::left << std::setw(w) <<  "--s_type: " << "set Solver Type: GS, PCG, QN(not implemented yet)\n\t"
               << std::left << std::setw(w) << "--s_max_it: " << "set Solver maximum number of iterations\n\t"  
-              << std::left << std::setw(w) << "--sphere_phi: " << "set Sphere phi\n\t"
+              << std::left << std::setw(w) << "--phi: " << "set potential [V]\n\t"
+              << std::left << std::setw(w) << "--num_ts: " << "set number of time steps\n\t"
+              << std::left << std::setw(w) << "--dt: " << "set time step [s]\n\t"
               << std::left << std::setw(w) << "--i: " << "use Instantiator(currently not working), other commands will be dissmised\n\t"
               << "\n";  
 };

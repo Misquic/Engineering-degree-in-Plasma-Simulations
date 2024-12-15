@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <unordered_map>
+#include <ranges>
 #include "Interactions.h"
 
 ChemistryIonize::ChemistryIonize(Species& neutrals, Species& ions, World& world, type_calc rate) noexcept: neutrals{neutrals},
@@ -313,9 +315,106 @@ DSMC_MEX_IONIZATION::DSMC_MEX_IONIZATION(Species& neutrals, Species& ions, Speci
 		// c[2]= 2*Const::k*273.15/m_reduced;	//Bird's reference params at 273.15 K
 		// c[3] = std::tgamma(2.5-c[1]); //Gamma(5/2-w)
 };
-void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
-    std::vector<std::vector<Particle*>> neutrals_in_cell = neutrals.sort_pointers(); // array of array of particle pointers
-    std::vector<std::vector<Particle*>> electrons_in_cell = electrons.sort_pointers(); // array of array of particle pointers
+// void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
+//     std::vector<std::vector<Particle*>> neutrals_in_cell = neutrals.sort_pointers(); // array of array of particle pointers
+//     std::vector<std::vector<Particle*>> electrons_in_cell = electrons.sort_pointers(); // array of array of particle pointers
+
+//     type_calc sigma_v_rel_max_temp = 0;
+//     type_calc mpw0 = neutrals.mpw0;
+
+//     int n_collisions = 0;
+//     int n_ionizations = 0;
+    
+//     for(int c = 0; c < num_cells; c++){
+//         std::vector<Particle*>& parts_neutrals = neutrals_in_cell[c]; //better performance for pointers when used
+//         std::vector<Particle*>& parts_electrons = electrons_in_cell[c];
+
+//         int np_neus = neutrals_in_cell[c].size();
+//         int np_eles = electrons_in_cell[c].size();
+//         if(np_neus < 1 || np_eles < 1) continue;
+
+//         type_calc n_groups_frac = 0.5 * np_neus * np_eles * mpw0 * sigma_v_rel_max * dt / dv;
+//         int n_groups = (int)(n_groups_frac + 0.5);
+//         if(n_groups > np_neus){ //cannot ionize more then it is aviable to ionize
+//             n_groups = np_neus-1;
+//         }
+//         std::cout << "n_groups_frac: " << n_groups_frac << " ";
+//         for(int g = 0; g < n_groups; g++){
+//             std::cout << "np_neus: " << np_neus << " np_eles: " << np_eles << "\n";
+//             int p_neus = (int)(rnd()*np_neus); //sample random neutral particle
+//             int p_neu = rnd(0,np_neus); //sample random neutral particle
+//             while(neutrals_in_cell[c][p_neu]->macro_weight==0){
+//                 p_neu = rnd(0,np_neus); 
+//             }
+
+//             int p_ele = rnd(0,np_eles);
+
+//             type_calc v_rel = (neutrals_in_cell[c][p_neu]->vel - electrons_in_cell[c][p_ele]->vel).length();
+//             type_calc sigma_v_rel = evaluateSigma(v_rel) * v_rel;
+//             if(sigma_v_rel > sigma_v_rel_max_temp) sigma_v_rel_max_temp = sigma_v_rel;
+
+//             type_calc P = sigma_v_rel/sigma_v_rel_max;
+
+//             std::cout << "P: " << P << " sigma_rel: " << sigma_v_rel << " n_groups_frac: " << n_groups_frac << " np_neus: " << np_neus << " np_eles: " << np_eles << " sigma_v_rel_max: "<< sigma_v_rel_max << "\n";
+
+//             bool ionised = false;
+//             if(P > rnd()){
+//                 n_collisions++;
+//                 type_calc E_new_ele = 0;
+//                 collide(neutrals_in_cell[c][p_neu]->vel, electrons_in_cell[c][p_ele]->vel, ionised, E_new_ele);
+//                 if(ionised){
+//                     n_ionizations++;
+//                     int ions_to_create = (int)(neutrals.mpw0/ions.mpw0 + rnd()); //assuming neutrals.mpw0 >= ions.mpw0
+//                     for(int i = 0; i < ions_to_create; i++){
+//                         ions.addParticle(neutrals_in_cell[c][p_neu]->pos, neutrals_in_cell[c][p_neu]->vel, ions.mpw0);
+//                     }
+
+//                     type_calc3 v_rel = parts_neutrals[p_neus]->vel - parts_electrons[p_eles]->vel;
+//                     type_calc v_rel_mag = v_rel.length();
+//                     type_calc E_rel = 0.5 * neutrals.mass * v_rel_mag * v_rel_mag; //in Joules
+//                     type_calc3 lc = world.XtoL(parts_neutrals[p_neus]->pos);
+//                     type_calc T = electrons.T.gather(lc);
+//                     electrons.addParticle(neutrals_in_cell[c][p_neu]->pos, electrons.sampleV3th(100), electrons.mpw0); // change it to random v3th?
+
+//                     neutrals_in_cell[c][p_neu]->macro_weight = 0; //mark nuetral to kill
+//                     if(p_neu != np_neus-1){
+//                         neutrals_in_cell[c][p_neu] = std::move(neutrals_in_cell[c][np_neus-1]); //kill ionised neutral in cell
+//                     }
+//                     np_neus--;
+//                 }
+//             }
+//         }
+//     }
+//     if(n_collisions){
+//         std::vector<Particle>& particles = neutrals.getPartRef(); //change it to acces only ones to kill
+//         int np = particles.size();
+//         for(int p = 0; p < np; p++){
+//             if(particles[p].macro_weight == 0){
+//                 particles[p] = std::move(particles[np-1]);
+//                 p--;
+//                 np--;
+//             }
+//         }
+//         particles.erase(particles.begin() + np, particles.end());
+//     }
+    
+    
+//     std::cerr << "n_collisions: " << n_collisions << " n_ionizations: " << n_ionizations << "\n";
+//     if(n_collisions){
+//         sigma_v_rel_max = sigma_v_rel_max_temp;
+//     }
+// };
+///////////////////// test ////////////////////
+
+void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{ // test for no pointers
+    // std::vector<std::vector<int>> neutrals_in_cell = neutrals.sort_indexes(); // array of array of particle pointers
+    // std::vector<std::vector<int>> electrons_in_cell = electrons.sort_indexes(); // array of array of particle pointers
+    std::unordered_map<int, std::vector<int>> neutrals_in_cell_index; //will be rare because indexes only for when there are both electrons and neutrons
+    std::unordered_map<int, std::vector<int>> electrons_in_cell_index; //rare
+    electrons.map_indexes(electrons_in_cell_index); // implement sorting neutrals in map but only for cells that already have electrons
+    neutrals.map_indexes(neutrals_in_cell_index, electrons_in_cell_index); //sorts and makes it rarer because only when there are both cpecies in cell
+    std::vector<Particle>& parts_neutrals = neutrals.getPartRef();
+    std::vector<Particle>& parts_electrons = electrons.getPartRef();
 
     type_calc sigma_v_rel_max_temp = 0;
     type_calc mpw0 = neutrals.mpw0;
@@ -323,13 +422,19 @@ void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
     int n_collisions = 0;
     int n_ionizations = 0;
     
-    for(int c = 0; c < num_cells; c++){
-        // std::vector<Particle*>& parts_neutrals = neutrals_in_cell[c];
-        // std::vector<Particle*>& parts_electrons = electrons_in_cell[c];
 
-        int np_neus = neutrals_in_cell[c].size();
-        int np_eles = electrons_in_cell[c].size();
-        if(np_neus < 1 || np_eles < 1) continue;
+    for(const std::pair<int, std::vector<int>>& pair: electrons_in_cell_index ){
+        int c = pair.first;
+    
+        std::vector<int>& indexes_neutrals = neutrals_in_cell_index[c];
+        int np_neus = indexes_neutrals.size();
+        // if(!np_neus){ //not needed anymore
+        //     continue;
+        // }
+        const std::vector<int>& indexes_electrons = pair.second;//electrons_in_cell_index[c];
+
+        int np_eles = indexes_electrons.size();
+        // if(np_neus < 1 || np_eles < 1) continue; // equivalent od first check?
 
         type_calc n_groups_frac = 0.5 * np_neus * np_eles * mpw0 * sigma_v_rel_max * dt / dv;
         int n_groups = (int)(n_groups_frac + 0.5);
@@ -340,14 +445,16 @@ void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
         for(int g = 0; g < n_groups; g++){
             //std::cout << "np_neus: " << np_neus << " np_eles: " << np_eles << "\n";
             // int p_neus = (int)(rnd()*np_neus); //sample random neutral particle
-            int p_neu = rnd(0,np_neus); //sample random neutral particle
-            while(neutrals_in_cell[c][p_neu]->macro_weight==0){
-                p_neu = rnd(0,np_neus); 
+            int p_neu = indexes_neutrals[rnd(0,np_neus)]; //sample random neutral particle
+            int checked_neutrals = 0;
+            while(parts_neutrals[p_neu].macro_weight==0 && checked_neutrals < 300){ //if it is marked to kill
+                p_neu = indexes_neutrals[rnd(0,np_neus)]; //should always find some but maximum is 300
+                checked_neutrals++;
             }
 
-            int p_ele = rnd(0,np_eles);
+            int p_ele = indexes_electrons[rnd(0,np_eles)];
 
-            type_calc v_rel = (neutrals_in_cell[c][p_neu]->vel - electrons_in_cell[c][p_ele]->vel).length();
+            type_calc v_rel = (parts_neutrals[p_neu].vel - parts_electrons[p_ele].vel).length();
             type_calc sigma_v_rel = evaluateSigma(v_rel) * v_rel;
             if(sigma_v_rel > sigma_v_rel_max_temp) sigma_v_rel_max_temp = sigma_v_rel;
 
@@ -356,15 +463,15 @@ void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
             //std::cout << "P: " << P << " sigma_rel: " << sigma_v_rel << " n_groups_frac: " << n_groups_frac << " np_neus: " << np_neus << " np_eles: " << np_eles << " sigma_v_rel_max: "<< sigma_v_rel_max << "\n";
 
             bool ionised = false;
-            if(P > rnd()){
+                if(P > rnd()){
                 n_collisions++;
                 type_calc E_new_ele = 0;
-                collide(neutrals_in_cell[c][p_neu]->vel, electrons_in_cell[c][p_ele]->vel, ionised, E_new_ele);
+                collide(parts_neutrals[p_neu].vel, parts_electrons[p_ele].vel, ionised, E_new_ele);
                 if(ionised){
                     n_ionizations++;
                     int ions_to_create = (int)(neutrals.mpw0/ions.mpw0 + rnd()); //assuming neutrals.mpw0 >= ions.mpw0
                     for(int i = 0; i < ions_to_create; i++){
-                        ions.addParticle(neutrals_in_cell[c][p_neu]->pos, neutrals_in_cell[c][p_neu]->vel, ions.mpw0);
+                        ions.addParticle(parts_neutrals[p_neu].pos, parts_neutrals[p_neu].vel, ions.mpw0);
                     }
 
                     // type_calc3 v_rel = parts_neutrals[p_neus]->vel - parts_electrons[p_eles]->vel;
@@ -372,11 +479,11 @@ void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
                     // type_calc E_rel = 0.5 * neutrals.mass * v_rel_mag * v_rel_mag; //in Joules
                     //type_calc3 lc = world.XtoL(parts_neutrals[p_neus]->pos);
                     //type_calc T = electrons.T.gather(lc);
-                    electrons.addParticle(neutrals_in_cell[c][p_neu]->pos, electrons.sampleV3th(100), electrons.mpw0); // change it to random v3th?
+                    electrons.addParticle(parts_neutrals[p_neu].pos, electrons.sampleV3th(100), electrons.mpw0); // change it to random v3th?
 
-                    neutrals_in_cell[c][p_neu]->macro_weight = 0; //mark nuetral to kill
+                    parts_neutrals[p_neu].macro_weight = 0; //mark nuetral to kill
                     if(p_neu != np_neus-1){
-                        neutrals_in_cell[c][p_neu] = std::move(neutrals_in_cell[c][np_neus-1]); //kill ionised neutral in cell
+                        parts_neutrals[p_neu] = std::move(parts_neutrals[np_neus-1]); //kill ionised neutral in cell
                     }
                     np_neus--;
                 }
@@ -402,6 +509,8 @@ void DSMC_MEX_IONIZATION::apply(type_calc dt) noexcept{
         sigma_v_rel_max = sigma_v_rel_max_temp;
     }
 };
+//////////////////// test ///////////////////
+
 type_calc DSMC_MEX_IONIZATION::evaluateSigma(type_calc v_rel){
     type_calc E = 0.5 * neutrals.mass * v_rel * v_rel / Const::q_e;
     // type_calc E = 0.5 * electrons.mass * v_rel * v_rel;

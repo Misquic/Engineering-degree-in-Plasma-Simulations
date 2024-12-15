@@ -5,8 +5,12 @@
 #include <fstream>
 #include "World.h"
 #include "Species.h"
+#include "funkc.h"
 
 namespace Output {
+
+	enum modes{none, all, screen, fields, particles, diagnostics, convergence};
+
 	void fields(World& world, std::vector<Species>& species, std::string name1 = "");
 	void screenOutput(World& world, std::vector<Species>& species);
 	void diagOutput(World& world, std::vector<Species>& species);
@@ -16,5 +20,7 @@ namespace Output {
 	void convergence(int NR_it, int ts);
     //namespace
 }
+std::istream& operator>>(std::istream& in, Output::modes& type);
+std::ostream& operator<<(std::ostream& out, Output::modes& type);
 
 #endif

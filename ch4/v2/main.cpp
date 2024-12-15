@@ -22,6 +22,10 @@ int main(int argc, char* argv[] ){
         print_help();
         return 0;
     }
+    
+    bool SUBCYCLING = parseArgument(args, "--subcycling", true);
+    Output::modes OUTPUT = parseArgument(args, "--output", Output::modes::fields); // 0 or any not used none // 1 all // 2 only screen on // 3 only screen and fields on // 4 only screen, fields and particles on etc.
+
     std::vector<Species> species; //species container
     std::vector<std::unique_ptr<Source>> sources; //sources container
     std::unique_ptr<PotentialSolver> solver_ptr;
@@ -35,19 +39,19 @@ int main(int argc, char* argv[] ){
 
     }
     else{
-        std::cout << "Running without Instatniator, you can use program arguments: --s_type --s_max_it --phi \n\n";
+        std::cout << "Running without Instatniator, you can use program arguments: --subcycling [<bool>] --s_type [PCG, GS] --s_max_it [<int>] --phi [<double>] --num_ts [<int>] --dt [<double>] \n\n";
 
         /*Read arguments*/
         SolverType solver_type = parseArgument(args, "--s_type", SolverType::PCG);
         int solver_max_it = parseArgument(args, "--s_max_it", 1000); //or 2e4;
         type_calc phi = parseArgument(args, "--phi", -1000.0);
-
-
+        int num_ts = parseArgument(args, "--num_ts", (int)100);
+        type_calc dt = parseArgument(args, "--dt", 2e-10);
         
         /*Instantiate World*/ 
         world_ptr = std::make_unique<World>(21, 21, 81, type_calc3{-0.1, -0.1, 0.0}, type_calc3{0.1, 0.1, 0.5}); //0.1cm x 0.11cm x 0.5 cm
         world_ptr ->setTimeStart(); //optional, use it where you want your start of Wall time
-        world_ptr->setTime(2e-10, 1000);
+        world_ptr->setTime(dt, num_ts);
 
         /*Instantiate objects*/ 
         world_ptr->addObject<Rectangle>(type_calc3(world_ptr->getXc()[0], world_ptr->getXc()[1], world_ptr->getX0()[2]),
@@ -91,14 +95,16 @@ int main(int argc, char* argv[] ){
 
         /*Instantiate solver*/ 
         solver_ptr = std::make_unique<PotentialSolver>(*world_ptr, solver_max_it ,1e-4, static_cast<SolverType>(solver_type));  // Jeśli solver nie został zainicjalizowany
-        solver_ptr->setReferenceValues(0, 1.5, T_eles);
+        solver_ptr->setReferenceValues(0, 1.5, num_den_ions);
 
+        std::cout << "\nOptions:\n";
+        std::cout << "Sybcycling: " << SUBCYCLING << "\n";
         std::cout << "Solver Type: " << solver_type << "\n";
 	    std::cout << "GS Solver max iterations: " << solver_ptr->get_GS_max_it() <<"\n";
         if(solver_type==PCG){
     	    std::cout << "PCG Solver max iterations: " << solver_ptr->get_PCG_max_it() <<"\n";
         }
-	    std::cout << "Potential at one electrode: " << phi << " V" << std::endl;
+	    std::cout << "Potential at one electrode: " << phi << " V\n" << std::endl;
 
     }
     Species& neutral_oxygen = species[0];
@@ -111,6 +117,7 @@ int main(int argc, char* argv[] ){
     
     for (Species &sp : species) {
         std::cout << sp.name << " has " << sp.getNumParticles() << " particles" << std::endl;
+        sp.computeMacroParticlesCount();
     }
 
     //Output::fields(*world_ptr, species);
@@ -120,54 +127,83 @@ int main(int argc, char* argv[] ){
 
     //world_ptr->setTimeStart();
     type_calc dt = world_ptr->getDt();
+    type_calc start_time_meas = 0;
+    type_calc time_interactions = 0;
+    type_calc time_advances = 0;
+    type_calc time_computes = 0;
     while(world_ptr->advanceTime()){
 
         for(std::unique_ptr<Source>& source: sources){
             source->sample();
         }
 
+        start_time_meas = world_ptr->getWallTime();
         for(std::unique_ptr<Interaction>& interaction: interactions){
             interaction->apply(world_ptr->getDt());
         }
+        time_interactions = world_ptr->getWallTime() - start_time_meas;
 
-        auto time_start = world_ptr->getWallTime();
-        for(Species&  sp: species){//TODO correct it so for species neutrals refer to species neutrals
-            if(sp.name == electrons.name){ //implemented subcycling
+        if(SUBCYCLING == true){
+            for(Species&  sp: species){//TODO correct it so for species neutrals refer to species neutrals
+                if(sp.name == electrons.name){ //implemented subcycling
+                    sp.advance(neutral_oxygen, neutral_oxygen, dt);
+                    sp.computeNumberDensity();
+                    sp.sampleMoments();
+                    sp.computeMacroParticlesCount();
+                    // std::cout << "moved electrons ";
+                }
+                else if(sp.charge!= 0 && world_ptr->getTs()%10 == 0){
+                    sp.advance(neutral_oxygen, neutral_oxygen, dt*10);
+                    sp.computeNumberDensity();
+                    sp.sampleMoments();
+                    sp.computeMacroParticlesCount();
+                    // std::cout << " moved ions ";
+                }
+                else if(world_ptr->getTs()%50 == 0){
+                    sp.advance(neutral_oxygen, neutral_oxygen, dt*50);
+                    sp.computeNumberDensity();
+                    sp.sampleMoments();
+                    sp.computeMacroParticlesCount();
+                    // std::cout << " moved neutrals ";
+                }
+                // sp.advance(neutral_oxygen, neutral_oxygen, dt); //normal
+            }
+        }
+        else{
+            for(Species&  sp: species){//TODO correct it so for species neutrals refer to species neutrals
                 sp.advance(neutral_oxygen, neutral_oxygen, dt);
-                // std::cout << "moved electrons ";
+                sp.computeNumberDensity();
+                sp.sampleMoments();
+                sp.computeMacroParticlesCount();
             }
-            else if(sp.charge!= 0 && world_ptr->getTs()%10 == 0){
-                sp.advance(neutral_oxygen, neutral_oxygen, dt*10);
-                // std::cout << " moved ions ";
-            }
-            else if(world_ptr->getTs()%50 == 0){
-                sp.advance(neutral_oxygen, neutral_oxygen, dt*50);
-                // std::cout << " moved neutrals ";
-            }
-            // sp.advance(neutral_oxygen, neutral_oxygen, dt); //normal
-            sp.computeNumberDensity();
-            sp.sampleMoments();
-            sp.computeMacroParticlesCount();
         }
         std::cout << "\n";
 
+        if(world_ptr->getTs()>5){ //moved before next section
+            for(Species&  sp: species){
+                sp.updateAverages();
+            }
+        }
 
         world_ptr->computeChargeDensity(species);
         solver_ptr->solve();
         solver_ptr->computeEF();
 
-        if(world_ptr->getTs()>5){
-            for(Species&  sp: species){
-                sp.updateAverages();
-            }
+
+        if(OUTPUT == Output::modes::all || OUTPUT > Output::modes::diagnostics ){
+            Output::diagOutput(*world_ptr, species);
         }
-        
-        //Output::diagOutput(*world_ptr, species);
-        Output::screenOutput(*world_ptr, species);
+        if(OUTPUT == Output::modes::all || OUTPUT > Output::modes::screen ){
+            Output::screenOutput(*world_ptr, species);
+        }
         int ts = world_ptr->getTs();
         if(ts%20 == 0 || world_ptr->isLastTimeStep()){ //|| (ts > 140 && ts < 160)){
-            Output::fields(*world_ptr, species);
-            //Output::particles(*world_ptr, species, 10000);
+            if(OUTPUT == Output::modes::all || OUTPUT > Output::modes::fields ){
+                Output::fields(*world_ptr, species);
+            }
+            if(OUTPUT == Output::modes::all || OUTPUT > Output::modes::particles ){
+                Output::particles(*world_ptr, species, 10000);
+            }
             std::cout << "Time taken so far: " << world_ptr->getWallTime() << std::endl;
 
         }

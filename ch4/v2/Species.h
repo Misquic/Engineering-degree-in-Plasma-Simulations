@@ -2,6 +2,7 @@
 #define SPECIES_H
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include "all.h"
 #include "Vec3.h"
 #include "World.h"
@@ -25,6 +26,7 @@ class Species{
 protected: 
     World&                world;      //reference to world object
     std::vector<Particle> particles;  //vector of particles
+    std::vector<std::vector<Particle*>> sorted_particles_pointers;  //vector of sorted particles per cell
     
     Field<type_calc>  n_sum;                      //number of particles
     Field<type_calc3> nv_sum;                     //number * velocity
@@ -84,6 +86,10 @@ public:
     std::vector<std::vector<Particle*>> sort_pointers();
     //std::vector<std::vector<std::unique_ptr<Particle>>> sort_pointers_unique();
     std::vector<std::vector<int>> sort_indexes();
+    void sort_indexes(std::vector<std::vector<int>>& particles_in_cell);
+    std::unordered_map<int, std::vector<int>> map_indexes();
+    void map_indexes(std::unordered_map<int, std::vector<int>>& map_particles_in_cell);
+    void map_indexes(std::unordered_map<int, std::vector<int>>& map_new_particles_in_cell, std::unordered_map<int, std::vector<int>>& already_mapped_other_species_particles);
 
 };
 
