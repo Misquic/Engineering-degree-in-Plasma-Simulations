@@ -316,3 +316,65 @@ void Output::particles(World& world, std::vector<Species>& species, int num_part
 
 
 };
+
+std::istream& operator>>(std::istream& in, Output::modes& type){
+    std::string input;
+    in >> input;
+	lower(input);
+
+    if (input == "none" || input == "0") {
+        type = Output::modes::none;
+    } else if (input == "all" || input == "1") {
+        type = Output::modes::all;
+    } else if (input == "screen" || input == "2") {
+        type = Output::modes::screen;
+    } else if (input == "fields" || input == "3") {
+        type = Output::modes::fields;
+    } else if (input == "particles" || input == "4") {
+        type = Output::modes::particles;
+    } else if (input == "diagnostics" || input == "5") {
+        type = Output::modes::diagnostics;
+	} else if (input == "convergence" || input == "6") {
+        type = Output::modes::convergence;
+    } else {
+		try{
+        	throw(std::invalid_argument("Wrong Output::modes value"));
+		}
+        catch(std::invalid_argument& e){
+			std::cerr << e.what() << ", setting Output::modes::fields \n";
+		}
+		type = Output::modes::fields;  // DEFAULT
+    }
+
+    return in;
+
+};
+
+std::ostream& operator<<(std::ostream& out, Output::modes& type){
+    switch(type){
+    case Output::modes::none:
+        out << "none";
+        break;
+    case Output::modes::all:
+        out << "all";
+        break;
+    case Output::modes::screen:
+        out << "screen";
+        break;
+    case Output::modes::fields:
+        out << "fields";
+        break;
+    case Output::modes::particles:
+        out << "particles";
+        break;
+    case Output::modes::diagnostics:
+        out << "diagnostics";
+        break;
+    case Output::modes::convergence:
+        out << "convergence";
+        break;
+    default:
+        break;
+    }
+    return out;
+};

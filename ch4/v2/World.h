@@ -16,6 +16,7 @@ class World{
 protected:
     type_calc3 x0;  //mesh origin
     type_calc3 dx;  //cell spacing
+    type_calc3 inv_dx; // inverse of dx
     type_calc3 xm;  //mesh max bound
     type_calc3 xc;  //mesh center
 
@@ -39,9 +40,11 @@ protected:
     void computeNodeVolumes();
 
 public:
-    const int nn[3];       //number of nodes
-    const int ni, nj, nk;  //number of nodes in individual directions
-    const int nv;          //volume in nodes
+    const int nn[3];             //number of nodes
+    const int ni,   nj,   nk;    //number of nodes in individual directions
+    const int ni_1, nj_1, nk_1;  //nuber of cells in individual directions
+    const int nv;                //volume in nodes
+    const int num_cells;         //number of cells
     
     //TODO take this to protected and add friends which use that Fields
     Field<type_calc>  phi;        //potential
@@ -69,10 +72,13 @@ public:
     type_calc3 getXc() const;
     type_calc3 getL() const; //sides of world
     type_calc getCellVolume() const;
+    int getNumCells() const;
     type_calc getPE() const;
     type_calc3 XtoL(const type_calc3& x) const;    //converts position to logical coordinates
     int3       XtoIJK(const type_calc3& x) const;  //converts position to indexes of cell
     int        XtoC(const type_calc3& x) const;    //converts position to one dimentional index of cell
+    int        IJKtoC(const int3& indexes) const;  //converts indexes of cell to dimentional index of cell
+    int3       CtoIJK(int c) const;          //converts dimentional index of cell to indexes of cell
     type_calc3 LtoX(const type_calc3& lc) const;   //converts logical coordinates to position
     type_calc3 LtoX(const int3& lc) const;         //converts logical coordinates to position
     type_calc3 LtoX(int i, int j, int k) const;    //converts logical coordinates to position

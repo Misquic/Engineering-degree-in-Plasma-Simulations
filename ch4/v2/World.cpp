@@ -5,23 +5,30 @@
 #include "Species.h"
 
 /*constructors*/
-World::World(int ni, int nj, int nk): nn{ni, nj, nk}, ni{ni}, nj{nj}, nk{nk}, nv{ni*nj*nk}, phi(nn), rho(nn), node_vol(nn), ef(nn), object_id(nn), object_phi(nn), node_type(nn),
+World::World(int ni, int nj, int nk): nn{ni, nj, nk}, ni{ni}, nj{nj}, nk{nk}, ni_1{ni-1}, nj_1{nj-1}, nk_1{nk-1}, nv{ni*nj*nk}, num_cells{(ni_1)*(nj_1)*(nk_1)},
+ phi(nn), rho(nn), node_vol(nn), ef(nn), object_id(nn), object_phi(nn), node_type(nn),
  time_start{std::chrono::high_resolution_clock::now()}{
 };
-World::World(int3 nn): nn{nn[0], nn[1], nn[2]}, ni{nn[0]}, nj{nn[1]}, nk{nn[2]}, nv{ni*nj*nk}, phi(nn), rho(nn), node_vol(nn), ef(nn), object_id(nn), object_phi(nn), node_type(nn),
+World::World(int3 nn): nn{nn[0], nn[1], nn[2]}, ni{nn[0]}, nj{nn[1]}, nk{nn[2]}, ni_1{nn[0]-1}, nj_1{nn[1]-1}, nk_1{nn[2]-1}, nv{ni*nj*nk}, num_cells{(ni_1)*(nj_1)*(nk_1)},
+ phi(nn), rho(nn), node_vol(nn), ef(nn), object_id(nn), object_phi(nn), node_type(nn),
  time_start{std::chrono::high_resolution_clock::now()}{
 };
 World::World(int ni, int nj, int nk, type_calc x1, type_calc y1, type_calc z1, type_calc x2, type_calc y2, type_calc z2): nn{ni, nj, nk},
- ni{ni}, nj{nj}, nk{nk}, nv{ni*nj*nk}, phi(nn), rho(nn), node_vol(nn), ef(nn), object_id(nn), object_phi(nn), node_type(nn), time_start{std::chrono::high_resolution_clock::now()}{
+ ni{ni}, nj{nj}, nk{nk}, ni_1{nn[0]-1}, nj_1{nn[1]-1}, nk_1{nn[2]-1}, nv{ni*nj*nk}, num_cells{(ni_1)*(nj_1)*(nk_1)}, phi(nn), rho(nn), node_vol(nn),
+ ef(nn), object_id(nn), object_phi(nn),
+ node_type(nn), time_start{std::chrono::high_resolution_clock::now()}{
     setExtents(x1, y1, z1, x2, y2, z2);
 };
-World::World(int ni, int nj, int nk, type_calc3 vec1, type_calc3 vec2): nn{ni, nj, nk}, ni{ni}, nj{nj}, nk{nk}, nv{ni*nj*nk}, phi(nn), rho(nn), node_vol(nn),
+World::World(int ni, int nj, int nk, type_calc3 vec1, type_calc3 vec2): nn{ni, nj, nk}, ni{ni}, nj{nj}, nk{nk}, ni_1{nn[0]-1}, nj_1{nn[1]-1},
+ nk_1{nn[2]-1}, nv{ni*nj*nk}, num_cells{(ni_1)*(nj_1)*(nk_1)}, phi(nn), rho(nn), node_vol(nn),
  ef(nn), object_id(nn), object_phi(nn), node_type(nn), time_start{std::chrono::high_resolution_clock::now()}{
     setExtents(vec1, vec2);
 };
 World::World(const World& other) noexcept: nn{other.ni, other.nj, other.nk}, ni{other.ni},
- nj{other.nj}, nk{other.nk}, nv{other.nv}, phi(other.phi), rho(other.rho), node_vol(other.node_vol),
- ef(other.ef), object_id(other.object_id), object_phi(other.object_phi), node_type(other.node_type), time_start{std::chrono::high_resolution_clock::now()}, x0{other.x0}, dx{other.dx},
+ nj{other.nj}, nk{other.nk}, ni_1{other.ni_1}, nj_1{other.nj_1}, nk_1{other.nk_1}, num_cells{other.num_cells}, 
+ nv{other.nv}, phi(other.phi), rho(other.rho), node_vol(other.node_vol),
+ ef(other.ef), object_id(other.object_id), object_phi(other.object_phi), node_type(other.node_type),
+ time_start{std::chrono::high_resolution_clock::now()}, x0{other.x0}, dx{other.dx},
  xm{other.xm}, xc{other.xc}, dt{other.dt}, num_ts{other.num_ts}, ts{other.ts}, time{other.time} {
 };
 World::World(World&& other) noexcept:
@@ -30,6 +37,10 @@ World::World(World&& other) noexcept:
  nj{other.nj},
  nk{other.nk},
  nv{other.nv},
+ ni_1{other.ni_1},
+ nj_1{other.nj_1},
+ nk_1{other.nk_1},
+ num_cells{other.num_cells},
  phi(std::move(other.phi)), 
  rho(std::move(other.rho)), 
  node_vol(std::move(other.node_vol)),
@@ -60,6 +71,7 @@ void World::setExtents(type_calc x1, type_calc y1, type_calc z1, type_calc x2, t
 
     for(int i = 0; i < 3; i++){
         dx[i] = (xm[i] -x0[i])/(nn[i] - 1); 
+        inv_dx[i] = 1/dx[i];
         xc[i] = 0.5 * (xm[i] + x0[i]);
     }
     computeNodeVolumes();
@@ -81,14 +93,17 @@ type_calc3 World::getXc() const{
 };
 type_calc3 World::getL() const{
     type_calc3 L;
-    L[0] = dx[0] * (ni-1);
-    L[1] = dx[1] * (nj-1);
-    L[2] = dx[2] * (nk-1);
+    L[0] = dx[0] * (ni_1);
+    L[1] = dx[1] * (nj_1);
+    L[2] = dx[2] * (nk_1);
     return L;
 }
 type_calc World::getCellVolume() const{
     return dx[0]*dx[1]*dx[2];
 };
+int World::getNumCells() const{
+    return num_cells;
+}
 
 type_calc World::getPE() const{
     type_calc pe{};
@@ -102,7 +117,7 @@ type_calc World::getPE() const{
     return 0.5*Const::eps_0*pe;
 };
 type_calc3 World::XtoL(const type_calc3& x) const{ //L - length from begining
-    type_calc3 lc = (x - x0)/dx;
+    type_calc3 lc = (x - x0).elWiseMult(inv_dx);
 
     return lc;
 };
@@ -110,9 +125,20 @@ int3 World::XtoIJK(const type_calc3& x) const{
     type_calc3 lc = XtoL(x);
     return {int(lc[0]), int(lc[1]), int(lc[2])};
 };
-int World::XtoC(const type_calc3& x) const{;   //converts position to one dimentional index of cell
+int World::XtoC(const type_calc3& x) const{   //converts position to one dimentional index of cell
     int3 indexes = XtoIJK(x);
-    return indexes[2]*(ni-1)*(nj-1) + indexes[1]*(ni-1) + indexes[0];
+    return indexes[2]*(ni_1)*(nj_1) + indexes[1]*(ni_1) + indexes[0];
+}
+int World::IJKtoC(const int3& indexes) const{
+    return indexes[2]*(ni_1)*(nj_1) + indexes[1]*(ni_1) + indexes[0];
+}
+int3 World::CtoIJK(int c) const{ //precompute if used extensively
+    int k = c/(nj_1*ni_1);
+    c = c%(nj_1*ni_1);
+    int j = c/(ni_1);
+    int i = c%ni_1;
+
+    return {i,j,k};
 }
 type_calc3 World::LtoX(const type_calc3& lc) const{ //converts logical coordinates to position
     type_calc3 ret{};
