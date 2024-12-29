@@ -51,7 +51,9 @@ public:
 
     /*methods*/
     size_t getNumParticles() const;
-    void advance(Species& neutrals, Species& spherium, type_calc dt);
+    void advanceSputtering(Species& neutrals, Species& spherium, type_calc dt); //with sputtering material
+    void advanceNoSputtering(Species& neutrals, type_calc dt); //without sputtering material
+    void advanceElectrons(type_calc dt); //for electrons
     void computeNumberDensity();
     void addParticle(type_calc x, type_calc y, type_calc z, type_calc u, type_calc v, type_calc w, type_calc macro_weight);
     void addParticle(type_calc3 pos, type_calc3 vel, type_calc macro_weight);

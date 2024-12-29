@@ -2,6 +2,8 @@
 #define VEC3_H
 
 #include <ostream>
+#include <iostream>
+#include <typeinfo>
 #include <iomanip>
 #include <sstream>
 #include <cmath>
@@ -16,11 +18,12 @@ protected:
     data_type data[3];
 public:
     /*constructors*/
-    Vec3() noexcept;                                                          //normal constructor
-    Vec3(const data_type x, const data_type y, const data_type z) noexcept;   //normal constructor
-    Vec3(const data_type other_data[3]) noexcept;                             //normal constructor
-    Vec3(const Vec3<data_type>& other) noexcept;                              //copying constructor
-    Vec3(Vec3<data_type>&& other) noexcept;                                   //moving constructor
+    Vec3() noexcept;                                                         //normal constructor
+    Vec3(const data_type x, const data_type y, const data_type z) noexcept;  //normal constructor
+    Vec3(const data_type other_data[3]) noexcept;                            //normal constructor
+    Vec3(const data_type val) noexcept;                                      //normal constructor
+    Vec3(const Vec3<data_type>& other) noexcept;                             //copying constructor
+    Vec3(Vec3<data_type>&& other) noexcept;                                  //moving constructor
 
     /*deconstructor*/
     //~Vec3();
@@ -75,6 +78,9 @@ template <class data_type>
 Vec3<data_type>::Vec3(const data_type other_data[3]) noexcept: data{other_data[0], other_data[1], other_data[2]}{
 };
 template <class data_type>
+Vec3<data_type>::Vec3(const data_type val) noexcept: data{val, val, val}{
+};
+template <class data_type>
 Vec3<data_type>::Vec3(const Vec3<data_type>& other) noexcept: data{other.data[0], other.data[1], other.data[2]}{
 };
 template <class data_type>
@@ -99,10 +105,14 @@ void Vec3<data_type>::normalise(){
 template <class data_type>
 Vec3<data_type> Vec3<data_type>::unit() const{
     type_calc l = length();
-    if(l){
-    return Vec3<data_type>( (*this)/l );
+    #ifdef DEBUG
+    if(!l){
+        std::cerr << "Vec3<" << typeid(data_type).name()<< ">::unit() division by zero\n";
     }
-    return Vec3<data_type>( {0,0,0} );
+    #endif
+    return Vec3<data_type>( (*this)/l );
+
+    //return Vec3<data_type>( {0,0,0} );
 };
 template <class data_type>
 Vec3<data_type> Vec3<data_type>::cross(const Vec3<data_type>& other) const{
@@ -156,6 +166,11 @@ Vec3<data_type> Vec3<data_type>::operator*(const data_type val) const{
 template <class data_type>
 Vec3<data_type> Vec3<data_type>::operator/(const data_type val) const{
     Vec3<data_type> ret(*this);
+    #ifdef DEBUG
+    if(!val){
+        std::cerr << "Vec3<" << typeid(data_type).name() << ">::operator/(const data_type val) Division by zero\n";
+    }
+    #endif
     data_type inverse_val = 1.0/val;
     for(int i = 0; i < 3; i++){
         ret.data[i] *= inverse_val;
@@ -182,6 +197,11 @@ void Vec3<data_type>::operator*=(const data_type val){
 };
 template <class data_type>
 void Vec3<data_type>::operator/=(const data_type val){
+    #ifdef DEBUG
+    if(!val){
+        std::cerr << "Vec3<" << typeid(data_type).name() << ">::operator/=(const data_type val) Division by zero\n";
+    }
+    #endif
     data_type inverse_val = 1.0/val;
     for(int i = 0; i < 3; i++){
         data[i] *= inverse_val;
@@ -236,6 +256,11 @@ template <class data_type>
 Vec3<data_type> Vec3<data_type>::operator/(const Vec3<data_type>& other) const{ //elementwise division
     Vec3<data_type> ret(*this);
     for(int i = 0; i < 3; i++){
+        #ifdef DEBUG
+        if(!other.data[i]){
+            std::cerr << "Vec3<" << typeid(data_type).name() << ">::operator/(const Vec3<data_type>& other) Division by zero\n";
+        }
+        #endif
         ret.data[i] /= other.data[i];
     }
     return ret;
@@ -280,10 +305,11 @@ template <class data_type>
 Vec3<data_type> operator*(const data_type& val, const Vec3<data_type>& vec3) {
     return vec3 * val;
 };
-template <class data_type>
-Vec3<data_type> operator/(const data_type& val, const Vec3<data_type>& vec3) {
-    return vec3 / val;
-};
+// template <class data_type>
+// Vec3<data_type> operator/(const data_type& val, const Vec3<data_type>& vec3) {
+//      //not usede ever, done it on mind autopilot
+//     return vec3 / val;
+// };
 
 template<typename data_type, typename val_name>
 Vec3<data_type> operator+(const val_name& val, const Vec3<data_type>& vec3) {
@@ -297,10 +323,11 @@ template<typename data_type, typename val_name>
 Vec3<data_type> operator*(const val_name& val, const Vec3<data_type>& vec3) {
     return vec3 * data_type( val);
 };
-template<typename data_type, typename val_name>
-Vec3<data_type> operator/(const val_name& val, const Vec3<data_type>& vec3) {
-    return vec3 / data_type( val);
-};
+// template<typename data_type, typename val_name>
+// Vec3<data_type> operator/(const val_name& val, const Vec3<data_type>& vec3) {
+//     //not needed ever, done it on mind autopilot
+//    return vec3 / data_type( val);
+// };
 
 /*functions*/
 template <class data_type>

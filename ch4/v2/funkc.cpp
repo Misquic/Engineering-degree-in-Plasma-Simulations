@@ -2,7 +2,7 @@
 #include <iomanip>
 
 void print_help(){
-    int w = 15;
+    int w = 16;
     std::cout << "commands:\n\t"
               << std::left << std::setw(w) << "--help: " << "display this help\n\t"
               << std::left << std::setw(w) << "--subcycling: " << "set use of subcycling true/false\n\t"

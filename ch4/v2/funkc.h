@@ -19,7 +19,7 @@ void print_help();
 template <typename T>
 T parseArgument(const std::vector<std::string>& args, const std::string& option, T defaultValue) { //to check if command occurs and to read passed value if it is
     for (size_t i = 0; i < args.size(); ++i) {
-        if (args[i] == option && i + 1 < args.size() && ) { //TODO add possibility of more then one option, ends witd something that starts with "--""
+        if (args[i] == option && i + 1 < args.size()) { //TODO add possibility of more then one option, ends witd something that starts with "--""
             std::istringstream iss(args[i + 1]);
             T value;
             if (iss >> value){
