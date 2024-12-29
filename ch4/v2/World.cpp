@@ -193,54 +193,54 @@ bool World::inBounds(type_calc3 pos){
         if (pos[i]<x0[i] || pos[i]>=xm[i]) return false;
     return true;
 };
-void World::addInlet(std::string face){
+void World::addInlet(std::string face, type_calc phi_set, int node_type){
     int find = inletName2Index(face);  
     switch(find){
     case 0:
         for(int j = 0; j < nj; j++){
             for(int k = 0; k < nk; k++){
-                object_id[0][j][k] = 2;
-                phi[0][j][k] = 0;
+                object_id[0][j][k] = node_type;
+                phi[0][j][k] = phi_set;
             }
         }
         break;
     case 1:
         for(int j = 0; j < nj; j++){
             for(int k = 0; k < nk; k++){
-                object_id[ni-1][j][k] = 2;
-                phi[ni-1][j][k] = 0;
+                object_id[ni-1][j][k] = node_type;
+                phi[ni-1][j][k] = phi_set;
             }
         }
         break;
     case 2:
         for(int i = 0; i < ni; i++){
             for(int k = 0; k < nk; k++){
-                object_id[i][0][k] = 2;
-                phi[i][0][k] = 0;
+                object_id[i][0][k] = node_type;
+                phi[i][0][k] = phi_set;
             }
         }
         break;
     case 3:
         for(int i = 0; i < ni; i++){
             for(int k = 0; k < nk; k++){
-                object_id[i][nj-1][k] = 2;
-                phi[i][nj-1][k] = 0;
+                object_id[i][nj-1][k] = node_type;
+                phi[i][nj-1][k] = phi_set;
             }
         }
         break;
     case 4:
         for(int i = 0; i < ni; i++){
             for(int j = 0; j < nj; j++){
-                object_id[i][j][0] = 2;
-                phi[i][j][0] = 0;
+                object_id[i][j][0] = node_type;
+                phi[i][j][0] = phi_set;
             }
         }
         break;
     case 5:
         for(int i = 0; i < ni; i++){
             for(int j = 0; j < nj; j++){
-                object_id[i][j][nk-1] = 2;
-                phi[i][j][nk-1] = 0;
+                object_id[i][j][nk-1] = node_type;
+                phi[i][j][nk-1] = phi_set;
             }
         }
         break;
@@ -313,7 +313,7 @@ bool World::advanceTime(){
     ts++;
     return ts<=num_ts;
 };
-type_calc World::getWallTime(){
+type_calc World::getWallTime(){ 
     auto time_end = std::chrono::high_resolution_clock::now();
     type_calc time_taken = (time_end - time_start).count()*1e-9;
     return time_taken;

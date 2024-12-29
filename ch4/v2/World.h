@@ -88,7 +88,7 @@ public:
     //type_calc3 getTs() const;
     void computeChargeDensity(std::vector<Species>& species);
     bool inBounds(type_calc3 pos);
-    void addInlet(std::string face = "-z");
+    void addInlet(std::string face = "-z", type_calc phi_set = 0, int node_type = 2);
 
     /*Objects*/
     void computeObjectID();
@@ -106,7 +106,7 @@ public:
     type_calc getTime() const;
     bool isLastTimeStep() const;
     bool advanceTime();
-    type_calc getWallTime();
+    type_calc getWallTime(); // returns time in seconds
     void setTimeStart();
 
     World& operator=(const World& other);

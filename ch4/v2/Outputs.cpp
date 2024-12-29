@@ -6,7 +6,7 @@
 #include "Outputs.h"
 
 
-void Output::fields(World& world, std::vector<Species>& species, std::string name1){
+void Output::fieldsOutput(World& world, std::vector<Species>& species, std::string name1){
 
 	for(Species& sp: species){
 		sp.computeGasProperties();
@@ -178,9 +178,8 @@ namespace Output{
 	std::ofstream f_convergence;
 }
 
-void Output::convergence(type_calc L2, int it, int ts){
+void Output::convergenceOutput(type_calc L2, int it, int ts){
 	using namespace Output;	//to get access to f_diag
-
 	//is the file open?
 	if (!f_convergence.is_open())
 	{
@@ -189,7 +188,7 @@ void Output::convergence(type_calc L2, int it, int ts){
 	}
 	f_convergence<<L2<<","<<it<<","<<ts<<",\n";
 };
-void Output::convergence(int NR_it, int ts){
+void Output::convergenceOutput(int NR_it, int ts){
 	using namespace Output;	//to get access to f_diag
 
 	//is the file open?
@@ -201,7 +200,7 @@ void Output::convergence(int NR_it, int ts){
 	f_convergence<<","<<","<< ts << "," << NR_it << "\n";
 };
 
-void Output::particles(World& world, std::vector<Species>& species, int num_parts_to_output_base, std::string name1){
+void Output::particlesOutput(World& world, std::vector<Species>& species, int num_parts_to_output_base, std::string name1){
 		/*loop over all species*/
 	for (Species &sp:species) {
 		int num_parts_to_output = num_parts_to_output_base;
@@ -317,7 +316,7 @@ void Output::particles(World& world, std::vector<Species>& species, int num_part
 
 };
 
-std::istream& operator>>(std::istream& in, Output::modes& type){
+std::istream& Output::operator>>(std::istream& in, Output::modes& type){
     std::string input;
     in >> input;
 	lower(input);
@@ -350,7 +349,7 @@ std::istream& operator>>(std::istream& in, Output::modes& type){
 
 };
 
-std::ostream& operator<<(std::ostream& out, Output::modes& type){
+std::ostream& Output::operator<<(std::ostream& out, Output::modes& type){
     switch(type){
     case Output::modes::none:
         out << "none";

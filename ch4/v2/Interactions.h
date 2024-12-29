@@ -86,11 +86,42 @@ protected:
     type_calc c[4]; //for sigma evaluation according to Bird's
 
 	// type_calc sigma_v_rel_max = 1e-14;	//some initial value
-	type_calc sigma_v_rel_max = 1e-5;	//some initial value
+	type_calc sigma_v_rel_max = 1e-14;	//some initial value
     type_calc evaluateSigma(type_calc v_rel);
     void collide(type_calc3& vel1, type_calc3& vel2, bool& ionize, type_calc& E_new);
 public:
     DSMC_MEX_IONIZATION(Species& neutrals, Species& ions, Species& electrons, World& world);
+
+    virtual void apply(type_calc dt) noexcept override;
+};
+
+class MC_MEX_IONIZATION: public Interaction{
+protected:
+    Species& neutrals; //just called so, can be charged, but one less than ions
+    Species& ions;
+    Species& electrons;
+    World& world;
+    std::function<void(type_calc)> apply_strategy;
+
+    type_calc E_ion_times_10; //in Joules
+
+    //precalculate
+    type_calc m_reduced;
+    type_calc mass_neus;
+    type_calc mass_eles;
+    type_calc sum_mass;
+    type_calc dv;
+    int num_cells;
+
+    type_calc c[4]; //for sigma evaluation according to Bird's
+
+	// type_calc sigma_v_rel_max = 1e-14;	//some initial value
+	type_calc sigma_v_rel_max = 1e-14;	//some initial value
+    type_calc evaluateSigma(type_calc v_rel);
+    void collide(const type_calc3& vel1, type_calc3& vel2, bool& ionize, type_calc3& vel_new);
+public:
+    MC_MEX_IONIZATION(Species& neutrals, Species& ions, Species& electrons, World& world);
+
     virtual void apply(type_calc dt) noexcept override;
 };
 

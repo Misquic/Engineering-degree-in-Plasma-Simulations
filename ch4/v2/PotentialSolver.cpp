@@ -1,8 +1,9 @@
 #include "PotentialSolver.h"
 #include <cmath>
 #include "funkc.h"
+#ifdef DEBUG
 #include "Outputs.h"
-
+#endif
 /////////////////////////////////////// namespace vec /////////////////////////////////////////////////////
 
 tcvector vec::deflate(const Field<type_calc>& f3){
@@ -42,7 +43,7 @@ type_calc vec::norm(const tcvector& v){
 /*constructors*/
 PotentialSolver::PotentialSolver(World& world, unsigned max_solver_it, type_calc tolerance, SolverType solver_type): world(world),
  PCG_max_solver_it{max_solver_it}, tolerance{tolerance}, A{world.ni*world.nj*world.nk}, M{world.ni*world.nj*world.nk}, solver_type{solver_type} {
-    GS_max_solver_it = 20*max_solver_it;
+    GS_max_solver_it = 50*max_solver_it;
     if(solver_type == GS){
         GS_max_solver_it = max_solver_it;
     }
@@ -112,7 +113,6 @@ bool PotentialSolver::solveGS(){
                         (phi[i-1][j][k]+phi[i+1][j][k])*inv_d2x + 
                         (phi[i][j-1][k]+phi[i][j+1][k])*inv_d2y + 
                         (phi[i][j][k-1]+phi[i][j][k+1])*inv_d2z) * inv_twos_over_inv;
-                        //if(it < 2 && k == 1) std::cerr << "phi[i-1]: " << phi[i-1][j][k] << " phi[i+1]: "<< phi[i+1][j][k] << " " << (phi[i-1][j][k]+phi[i+1][j][k])*inv_d2x << " ";
                         /*SOR*/
                         phi[i][j][k] = phi[i][j][k] + SOR_weight * (new_phi - phi[i][j][k]);
                     }
@@ -122,7 +122,6 @@ bool PotentialSolver::solveGS(){
         }
         /*check for convergence*/
         if(it%25 == 0){
-            //std::cerr << phi[0][1][9] << std::endl;
             sum = 0;
             for(int i = 0; i < world.ni; i++){
                 for(int j = 0; j < world.nj; j++){
@@ -163,9 +162,6 @@ bool PotentialSolver::solveGS(){
     if(!converged){
         std::cerr << "GS SOR failed to converge, L2 = " << L2 << " tolerance = " << tolerance << " time step = " << world.getTs() << std::endl;
     }
-
-    //std::cerr << "Iterations made: " << it << " L2 = " << L2 << std::endl; 
-
     return converged;
 };
 //??? pointers slower slightly due to dereference?
@@ -206,9 +202,11 @@ bool PotentialSolver::solveNRPCG(){
         }
 
         J = A.diagSubtract(P);
+        #ifdef DEBUG
         if(world.getTs() > 133){
-            Output::convergence(it, world.getTs());
+            Output::convergenceOutput(it, world.getTs());
         }
+        #endif
         if(!solvePCGlinear(J,y,F)){
             solveGSlinear(J,y,F);
         }
@@ -226,11 +224,10 @@ bool PotentialSolver::solveNRPCG(){
     if(!converged){
         std::cerr << "NR+PCG failed to converge, norm = " << norm << " tolerance = " << NR_TOL << " time step = " << world.getTs() << std::endl;
     }
-    //std::cerr << "Iterations made: " << it << " norm = " << norm << std::endl; 
     vec::inflate(phi_, world.phi);
     return converged;
 };
-bool PotentialSolver::solvePCGlinear(const Matrix& A, tcvector& x, const tcvector& b){ // sometimes doesn't converge, if that happens it makes solution worse, GS cannot make it right fast enough
+bool PotentialSolver::solvePCGlinear(const Matrix& A, tcvector& x, const tcvector& b){ // sometimes doesn't converge, if that happens it makes solution worse, sometimes GS cannot make it right fast enough then it can lead to nans
     bool converged = false;
     type_calc L2{};
     Matrix M = A.invDiagonal();
@@ -253,10 +250,12 @@ bool PotentialSolver::solvePCGlinear(const Matrix& A, tcvector& x, const tcvecto
         // tu gdzieś dochodzi do nan
         d = (alpha/beta)*d - s;
         L2 = vec::norm(g);
+        #ifdef DEBUG
         if(world.getTs() > 133){
-            Output::convergence(L2,it, world.getTs());
+            Output::convergenceOutput(L2,it, world.getTs());
         }
-        
+        #endif
+
         if(L2 < tolerance){
             converged = true;
             break;
@@ -267,7 +266,6 @@ bool PotentialSolver::solvePCGlinear(const Matrix& A, tcvector& x, const tcvecto
         std::cerr << "PCGlinear failed to converge, norm(g) = " << L2 << " tolerance = " << tolerance << " time step = " << world.getTs()<< std::endl;
 
     }
-    //std::cerr << "Iterations made: " << it << " L2 = " << L2 << std::endl; 
     return converged;
 
 }

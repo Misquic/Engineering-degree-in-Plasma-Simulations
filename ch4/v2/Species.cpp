@@ -25,7 +25,7 @@ Species::Species(std::string name, type_calc mass, type_calc charge, World& worl
 size_t Species::getNumParticles() const{
     return particles.size();
 };
-void Species::advance(Species& neutrals, Species& spherium, type_calc dt){//TODO change it so species take into account if its neutral or not? -> subclasses
+void Species::advanceSputtering(Species& neutrals, Species& spherium, type_calc dt){//TODO change it so species take into account if its neutral or not? -> subclasses
     type_calc3 x0 = world.getX0();
     type_calc3 xm = world.getXm();
 
@@ -73,7 +73,6 @@ void Species::advance(Species& neutrals, Species& spherium, type_calc dt){//TODO
                 }
                 else{ //ions
                     type_calc mpw_ratio = this->mpw0/neutrals.mpw0;
-                    //kill
 
                     /*inject neutrals*/
                     int mp_create = (int)(mpw_ratio + rnd()); //number of macroparticles to create
@@ -92,7 +91,7 @@ void Species::advance(Species& neutrals, Species& spherium, type_calc dt){//TODO
                     particles[p] = std::move(particles[np-1]);
                     np--;
                     p--;
-                    break; //does it work correctly?
+                    break;
                 }
 
                 t_reminding *= (1-tp);
@@ -103,30 +102,112 @@ void Species::advance(Species& neutrals, Species& spherium, type_calc dt){//TODO
         }
     }
     particles.erase(particles.begin() + np, particles.end());
+};
+//
+void Species::advanceNoSputtering(Species& neutrals, type_calc dt){//TODO change it so species take into account if its neutral or not? -> subclasses
+    type_calc3 x0 = world.getX0();
+    type_calc3 xm = world.getXm();
 
-    ////////////////////////////////////// LIKE ORIGINAL /////////////////////////////////////////////
-    // for(Particle& part : particles){
-    //     lc = world.XtoL(part.pos);
-        
-    //     ef_part = world.ef.gather(lc);
+    type_calc3 lc{};
+    type_calc3 ef_part{};
+    
+    size_t np = particles.size();
 
-    //     part.vel += ef_part*(dt*charge/mass);
-    //     part.pos += part.vel*dt;
+    for(size_t p = 0; p < np; p++){
+        Particle& part = particles[p];
+        type_calc3 lc = world.XtoL(part.pos);
 
-    //     if(world.inObject(part.pos) || !world.inBounds(part.pos)){
-    //         part.macro_weight = 0;
-    //         continue;
-    //     }
-    // }
-    // size_t np = particles.size();
-    // for(size_t p = 0; p < np; p++){
-    //     if(particles[p].macro_weight>0) continue;
-    //     particles[p] = particles[np-1]; //use std::move?
-    //     np--;
-    //     p--;
-    // }
-    // particles.erase(particles.begin() + np, particles.end());
+        type_calc3 ef_part = world.ef.gather(lc);
 
+        part.vel += ef_part*(dt*charge/mass);
+
+        type_calc t_reminding = 1;
+        int n_bounces = 0;
+        while(t_reminding > 0){
+            if(++n_bounces > 20) {
+                particles[p] = std::move(particles[np-1]);
+                np--;
+                p--;
+                break;
+            }
+
+            type_calc3 pos_old = part.pos;
+            part.pos += part.vel*t_reminding*dt;
+
+            int in_object = world.inObject(part.pos);
+
+            if(!world.inBounds(part.pos)){
+                particles[p] = std::move(particles[np-1]);
+                np--;
+                p--;
+                break;
+            }
+            else if(in_object){
+                type_calc tp;
+                type_calc3 n; //normal vector to the surface at the point of intersection
+                world.lineIntersect(pos_old, part.pos, in_object, tp, part.pos, n); // passing tp, pos, n so it overwrites them to correct values, in stead of returning tuple
+                type_calc v_mag_pre_impact = part.vel.length();
+                if(!charge){ //neutrals
+                    part.vel = sampleReflectedVelocity(part.pos, part.vel.length(), n); 
+                }
+                else{ //ions
+                    type_calc mpw_ratio = this->mpw0/neutrals.mpw0;
+
+                    /*inject neutrals*/
+                    int mp_create = (int)(mpw_ratio + rnd()); //number of macroparticles to create
+                    for(int i = 0; i < mp_create; i ++){
+                        type_calc3 vel = sampleReflectedVelocity(part.pos, v_mag_pre_impact, n);
+                        neutrals.addParticle(part.pos, vel);
+                    }                    
+                    particles[p] = std::move(particles[np-1]);
+                    np--;
+                    p--;
+                    break;
+                }
+
+                t_reminding *= (1-tp);
+                continue;
+            }
+            
+            t_reminding = 0;
+        }
+    }
+    particles.erase(particles.begin() + np, particles.end());
+};
+void Species::advanceElectrons(type_calc dt){
+    type_calc3 x0 = world.getX0();
+    type_calc3 xm = world.getXm();
+
+    type_calc3 lc{};
+    type_calc3 ef_part{};
+    
+    size_t np = particles.size();
+
+    for(size_t p = 0; p < np; p++){
+        Particle& part = particles[p];
+        type_calc3 lc = world.XtoL(part.pos);
+
+        type_calc3 ef_part = world.ef.gather(lc);
+
+        part.vel += ef_part*(dt*charge/mass);
+        part.pos += part.vel*dt;
+
+        int in_object = world.inObject(part.pos);
+
+        if(!world.inBounds(part.pos)){
+            particles[p] = std::move(particles[np-1]);
+            np--;
+            p--;
+            continue;
+        }
+        else if(in_object){                    
+            particles[p] = std::move(particles[np-1]);
+            np--;
+            p--;
+            continue;
+        }
+    }
+    particles.erase(particles.begin() + np, particles.end());
 };
 void Species::computeNumberDensity(){ //to ommit doind this thice implement using n_sum
 
@@ -236,24 +317,37 @@ void Species::loadParticleBoxQS(type_calc3 x1, type_calc3 x2, type_calc num_den_
 void Species::loadParticleBoxThermal(type_calc3 x0, type_calc3 sides, type_calc num_den_, type_calc T){
     type_calc box_vol = sides[0]*sides[1]*sides[2];
     type_calc num_micro = num_den_ * box_vol;
-    int num_macro = (int)(num_micro/mpw0); 
+    size_t num_macro = (size_t)(num_micro/mpw0); 
     // this->mpw0 = macro_weight;
 
-    std::cout << "Loading particle " << name << " in a box of volume : "<< box_vol << " with number of microparticles: " << num_micro << " with number of macroparticles: " << num_macro << " and weigh of macroparticle: " << this->mpw0 << "\n";
-    
+    std::cout << "Loading particle " << name << " in a box of volume : "<< box_vol << " with number of microparticles: " << num_micro << " with number of macroparticles: " << num_macro << " and weigh of macroparticle: " << this->mpw0 << std::endl;
+    if(num_macro < 1){
+        throw std::invalid_argument("number of macroparticles less than 1, change initial values\n");
+    }
 
     this->particles.reserve(num_macro);
 
     type_calc3 pos;
     type_calc3 vel;
-    type_calc3 xmin = x0-sides;
-    type_calc3 xmax = x0+sides;
-    for(int i = 0; i < num_macro; i++){
+    type_calc3 xmin = x0-sides/2;
+    type_calc3 xmax = x0+sides/2;
+    int every_1_pm = num_macro/100;
+    if(every_1_pm < 1){
+        every_1_pm = 1;
+    }else{
+        while(every_1_pm > 1e6){
+            every_1_pm /= 10;
+        }
+    }
+    for(size_t i = 0; i < num_macro; i++){
+        if(i%every_1_pm==0){
+            std::cout << "\r                                         \rloaded: " << (type_calc)i/num_macro*100.0 << "%" << std::flush;
+        }
         pos = {rnd(xmin[0], xmax[0]), rnd(xmin[1], xmax[1]), rnd(xmin[2], xmax[2])};
         vel = sampleV3th(T);
         addParticle(pos, vel, mpw0);
     }
-    std::cout << "Loaded number of microparticles: " << particles.size()<< "\n";
+    std::cout << "\rLoaded number of macroparticles: " << particles.size()<< "\n";
 
 };
 

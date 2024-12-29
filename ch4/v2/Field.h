@@ -389,10 +389,12 @@ void Field<data_type>::operator/=(const data_type val){
 /*field-field operators*/
 template <class data_type>
 Field<data_type>& Field<data_type>::operator=(const Field<data_type>& other){
+    #ifdef DEBUG
     if (this->ni != other.ni || this->nj != other.nj || this->nk != other.nk) {
         throw std::invalid_argument("Dimensions of both fields must be the same for Field = Field.");
         return *this;
     }
+    #endif
     
     for(int i = 0; i < this->ni; i++){
         for(int j = 0; j < this->nj; j++){
@@ -406,10 +408,12 @@ Field<data_type>& Field<data_type>::operator=(const Field<data_type>& other){
 template <class data_type>
 Field<data_type>& Field<data_type>::operator=(Field<data_type>&& other){
     if(this != &other){
+        #ifdef DEBUG
         if (this->ni != other.ni || this->nj != other.nj || this->nk != other.nk) {
             throw std::invalid_argument("Dimensions of both fields must be the same for Field = &&Field.");
             return *this; /*seems like an arbitral choice?*/
         }
+        #endif
 
         if(!(this->data.empty())) this->data.clear();
         this->data = move(other.data);
@@ -420,10 +424,12 @@ Field<data_type>& Field<data_type>::operator=(Field<data_type>&& other){
 };
 template <class data_type>
 Field<data_type> Field<data_type>::operator+(const Field<data_type>& other) const {
+    #ifdef DEBUG
     if (this->ni != other.ni || this->nj != other.nj || this->nk != other.nk) {
         throw std::invalid_argument("Dimensions of both fields must be the same for Field + Field.");
         return *this;
     }
+    #endif
 
     Field<data_type> ret(this->ni, this->nj, this->nk);
     for(int i = 0; i < this->ni; i++){
@@ -437,10 +443,12 @@ Field<data_type> Field<data_type>::operator+(const Field<data_type>& other) cons
 };
 template <class data_type>
 Field<data_type> Field<data_type>::operator-(const Field<data_type>& other) const {
+    #ifdef DEBUG
     if (this->ni != other.ni || this->nj != other.nj || this->nk != other.nk) {
         throw std::invalid_argument("Dimensions of both fields must be the same for Field - Field.");
         return *this;
     }
+    #endif
 
     Field<data_type> ret(this->ni, this->nj, this->nk);
     for(int i = 0; i < this->ni; i++){
@@ -454,10 +462,12 @@ Field<data_type> Field<data_type>::operator-(const Field<data_type>& other) cons
 };
 template <class data_type>
 Field<data_type> Field<data_type>::operator*(const Field<data_type>& other) const {
+    #ifdef DEBUG
     if (this->ni != other.ni || this->nj != other.nj || this->nk != other.nk) {
         throw std::invalid_argument("Dimensions of both fields must be the same for Field * Field.");
         return *this;
     }
+    #endif
 
     Field<data_type> ret(this->ni, this->nj, this->nk);
     for(int i = 0; i < this->ni; i++){
@@ -471,10 +481,12 @@ Field<data_type> Field<data_type>::operator*(const Field<data_type>& other) cons
 };
 template <class data_type>
 Field<data_type> Field<data_type>::operator/(const Field<data_type>& other) const { /*most likely not needed operator*/
+    #ifdef DEBUG
     if (this->ni != other.ni || this->nj != other.nj || this->nk != other.nk) {
         throw std::invalid_argument("Dimensions of both fields must be the same for Field / Field.");
         return *this;
     }
+    #endif
 
     Field<data_type> ret(this->ni, this->nj, this->nk);
     for(int i = 0; i < this->ni; i++){
@@ -493,10 +505,12 @@ Field<data_type> Field<data_type>::operator/(const Field<data_type>& other) cons
 };
 template <class data_type>
 void Field<data_type>::operator+=(const Field<data_type>& other){
+    #ifdef DEBUG
     if (this->ni != other.ni || this->nj != other.nj || this->nk != other.nk) {
         throw std::invalid_argument("Dimensions of both fields must be the same for Field += Field.");
         return;
     }
+    #endif
 
     for(int i = 0; i < this->ni; i++){
         for(int j = 0; j < this->nj; j++){
@@ -508,10 +522,12 @@ void Field<data_type>::operator+=(const Field<data_type>& other){
 };
 template <class data_type>
 void Field<data_type>::operator-=(const Field<data_type>& other){
+    #ifdef DEBUG
     if (this->ni != other.ni || this->nj != other.nj || this->nk != other.nk) {
         throw std::invalid_argument("Dimensions of both fields must be the same for Field -= Field.");
         return;
     }
+    #endif
 
     for(int i = 0; i < this->ni; i++){
         for(int j = 0; j < this->nj; j++){
@@ -523,10 +539,12 @@ void Field<data_type>::operator-=(const Field<data_type>& other){
 };
 template <class data_type>
 void Field<data_type>::operator*=(const Field<data_type>& other){
+    #ifdef DEBUG
     if (this->ni != other.ni || this->nj != other.nj || this->nk != other.nk) {
         throw std::invalid_argument("Dimensions of both fields must be the same for Field *= Field.");
         return;
     }
+    #endif
 
     for(int i = 0; i < this->ni; i++){
         for(int j = 0; j < this->nj; j++){
@@ -538,10 +556,12 @@ void Field<data_type>::operator*=(const Field<data_type>& other){
 };
 template <class data_type>
 void Field<data_type>::operator/=(const Field<data_type>& other){
+    #ifdef DEBUG
     if (ni != other.ni || nj != other.nj || nk != other.nk) {
         throw std::invalid_argument("Dimensions of both fields must be the same for Field /= Field.");
         return;
     }
+    #endif
 
     for(int i = 0; i < ni; i++){
         for(int j = 0; j < nj; j++){
@@ -560,10 +580,12 @@ void Field<data_type>::operator/=(const Field<data_type>& other){
 /*field-other_type field operators*/
 template <class data_type2>
 Field<data_type2> operator/(const Field<data_type2>& left, const Field<type_calc>& other){
+    #ifdef DEBUG
     if (left.ni != other.ni || left.nj != other.nj || left.nk != other.nk) {
         throw std::invalid_argument("Dimensions of both fields must be the same for Field<data_type> / Field<data_type2>.");
         return left;
     }
+    #endif
 
     Field<data_type2> ret(left.ni, left.nj, left.nk);
     for(int i = 0; i < left.ni; i++){
