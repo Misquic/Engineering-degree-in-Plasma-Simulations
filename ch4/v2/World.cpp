@@ -188,7 +188,7 @@ void World::computeChargeDensity(std::vector<Species>& species){
         rho += sp.charge * sp.den;
     }
 };
-bool World::inBounds(type_calc3 pos){
+bool World::inBounds(const type_calc3& pos){
     for (int i=0;i<3;i++)
         if (pos[i]<x0[i] || pos[i]>=xm[i]) return false;
     return true;
@@ -199,7 +199,7 @@ void World::addInlet(std::string face, type_calc phi_set, int node_type){
     case 0:
         for(int j = 0; j < nj; j++){
             for(int k = 0; k < nk; k++){
-                object_id[0][j][k] = node_type;
+                this->node_type[0][j][k] = node_type;
                 phi[0][j][k] = phi_set;
             }
         }
@@ -207,7 +207,7 @@ void World::addInlet(std::string face, type_calc phi_set, int node_type){
     case 1:
         for(int j = 0; j < nj; j++){
             for(int k = 0; k < nk; k++){
-                object_id[ni-1][j][k] = node_type;
+                this->node_type[ni-1][j][k] = node_type;
                 phi[ni-1][j][k] = phi_set;
             }
         }
@@ -215,7 +215,7 @@ void World::addInlet(std::string face, type_calc phi_set, int node_type){
     case 2:
         for(int i = 0; i < ni; i++){
             for(int k = 0; k < nk; k++){
-                object_id[i][0][k] = node_type;
+                this->node_type[i][0][k] = node_type;
                 phi[i][0][k] = phi_set;
             }
         }
@@ -223,7 +223,7 @@ void World::addInlet(std::string face, type_calc phi_set, int node_type){
     case 3:
         for(int i = 0; i < ni; i++){
             for(int k = 0; k < nk; k++){
-                object_id[i][nj-1][k] = node_type;
+                this->node_type[i][nj-1][k] = node_type;
                 phi[i][nj-1][k] = phi_set;
             }
         }
@@ -231,7 +231,7 @@ void World::addInlet(std::string face, type_calc phi_set, int node_type){
     case 4:
         for(int i = 0; i < ni; i++){
             for(int j = 0; j < nj; j++){
-                object_id[i][j][0] = node_type;
+                this->node_type[i][j][0] = node_type;
                 phi[i][j][0] = phi_set;
             }
         }
@@ -239,7 +239,7 @@ void World::addInlet(std::string face, type_calc phi_set, int node_type){
     case 5:
         for(int i = 0; i < ni; i++){
             for(int j = 0; j < nj; j++){
-                object_id[i][j][nk-1] = node_type;
+                this->node_type[i][j][nk-1] = node_type;
                 phi[i][j][nk-1] = phi_set;
             }
         }
@@ -249,13 +249,29 @@ void World::addInlet(std::string face, type_calc phi_set, int node_type){
         break;
     }
 };
+
+void World::dirichletBoundries(){
+    for(int i = 0; i < this->ni; i++){
+        for(int j = 0; j < this->nj; j++){
+            for (int k = 0; k < this->nk; k++){
+                if(i == 0 || i == ni-1 || j == 0 || j == nj-1 || k ==0 || k == nk-1){
+                    node_type[i][j][k] = DIRICHLET;
+                }
+            }
+        }
+    }
+};
+
+
 void World::computeObjectID(){
     for(const std::unique_ptr<Object>& obj_ptr: objects){
         for(int i = 0; i < this->ni; i++){
             for(int j = 0; j < this->nj; j++){
                 for (int k = 0; k < this->nk; k++){
-                    if(obj_ptr->inObject(this->LtoX(i, j, k))){
-                        object_id[i][j][k] = 1;
+                    type_calc id = obj_ptr->inObject(this->LtoX(i, j, k));
+                    if(id){
+                        object_id[i][j][k] = id;
+                        node_type[i][j][k] = DIRICHLET;
                         //object_phi[i][j][k] = obj_ptr->getPhi();
                         phi[i][j][k] = obj_ptr->getPhi();
                     }

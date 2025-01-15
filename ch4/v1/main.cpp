@@ -268,12 +268,12 @@ int main(int argc, char* argv[] ){
         /* Instantiate interactions*/
         type_calc rate = 1e-4;
         interactions.emplace_back(std::make_unique<ChemistryIonize>(species[3], species[4], *world_ptr, rate));
-        // interactions.emplace_back(std::make_unique<DSMC_MEX>(species[0], *world_ptr));
+        interactions.emplace_back(std::make_unique<DSMC_MEX>(species[0], *world_ptr));
 
 
         /*Instantiate solver*/ 
         solver_ptr = std::make_unique<PotentialSolver>(*world_ptr, solver_max_it ,1e-4, static_cast<SolverType>(solver_type));  // Jeśli solver nie został zainicjalizowany
-        solver_ptr->setReferenceValues(0, 1.5, num_den_ions);
+        solver_ptr->setReferenceValues(0, num_den_ions, 1.5);
 
         std::cout << "Solver Type: " << solver_type << "\n";
 	    std::cout << "GS Solver max iterations: " << solver_ptr->get_GS_max_it() <<"\n";
@@ -335,7 +335,7 @@ int main(int argc, char* argv[] ){
         int ts = world_ptr->getTs();
         if(ts%10 == 0 || world_ptr->isLastTimeStep()){ //|| (ts > 140 && ts < 160)){
             Output::fields(*world_ptr, species);
-            //Output::particles(*world_ptr, species, 10000);
+            Output::particles(*world_ptr, species, 10000);
             std::cout << "Time taken so far: " << world_ptr->getWallTime() << std::endl;
 
         }

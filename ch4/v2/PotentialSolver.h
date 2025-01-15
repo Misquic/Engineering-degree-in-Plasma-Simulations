@@ -51,20 +51,20 @@ public:
     bool solveGS();                                                        //solves potential using Gauss-Seidel and Succesive Over Relaxation
     
     bool solveNRPCG();                                                     //solves potential using Newton-Rapshon Preconditioned Conjugate Gradient uses PCGlinear and GSlinear if it fails to converge
-    bool solvePCGlinear(const Matrix& A, tcvector& x, const tcvector& b);  //solves matrix equation Ax = b using Preconditioned Conjugate Gradient
+    bool solvePCGlinear(const Matrix &A, tcvector &x, const tcvector &b);  // solves matrix equation Ax = b using Preconditioned Conjugate Gradient
     bool solveGSlinear(const Matrix& A, tcvector& x, const tcvector& b);   //solves matrix equation Ax = b Gauss-Seidel and Succesive Over Relaxation
    
     bool solveQN();                                                        //solves quasi neutral system
 
     void computeEF();                                                      // computes electric field = -gradieng(phi)
     void setReferenceValues(type_calc phi0, type_calc n0, type_calc Te0);
-    void buildMatrix();
 
     unsigned get_GS_max_it();
     unsigned get_PCG_max_it();
 
 
 private:
+    void buildMatrix();
     void precalculate();
     /*precalculate values*/
     /*potential*/

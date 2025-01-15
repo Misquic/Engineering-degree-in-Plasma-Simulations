@@ -108,7 +108,7 @@ void Sphere::print(std::ostream& out) const{ // for
     Object::print(out);
     out << " radius: " << radius;
 };
-bool Sphere::inObject(type_calc3 x) const{
+bool Sphere::inObject(const type_calc3& x) const{
     type_calc3 r = x - pos;
     if(r * r <= r_squared) return true;
     return false;
@@ -137,8 +137,6 @@ void Sphere::lineIntersect(const type_calc3& x1, const type_calc3& x2, type_calc
 
     intersection_point = x1 + t_entry*B; // intersect pos on surface
     n = (intersection_point-this->pos).unit();
-    
-
 };
 
 
@@ -230,7 +228,7 @@ std::ostream& operator<<(std::ostream& out, Rectangle obj){
     obj.print(out);
     return out;
 };
-bool Rectangle::inObject(type_calc3 x) const{ //for now orientation is not taken into account, to do that convert to inertial system of Rectangle and than use normal isObject?
+bool Rectangle::inObject(const type_calc3& x) const{ //for now orientation is not taken into account, to do that convert to inertial system of Rectangle and than use normal isObject?
     //if(orientation == type_calc3(1, 0, 0))
     type_calc3 temp = abs(x - pos);
     for(int i = 0; i < 3; i++){

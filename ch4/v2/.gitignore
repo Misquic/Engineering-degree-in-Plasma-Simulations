@@ -2,4 +2,4 @@ perf_info/
 outputs/
 *.out
 debug/
-results_save*/
+results_*/

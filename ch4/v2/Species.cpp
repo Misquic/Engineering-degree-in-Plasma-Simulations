@@ -240,7 +240,7 @@ void Species::addParticle(type_calc3 pos, type_calc3 vel){
 };
 
 void Species::loadParticleBox(type_calc3 x1, type_calc3 x2, type_calc num_den_, type_calc num_macro){
-    throw("use of depracated method");
+    throw std::runtime_error("Species::loadParticleBox - use of depracated method");
     
     /*x1 - starting vertex of box
       x2 - opposite vertex of box
@@ -267,24 +267,27 @@ void Species::loadParticleBox(type_calc3 x1, type_calc3 x2, type_calc num_den_, 
         addParticle(pos, vel, macro_weight);
     }
 };
-void Species::loadParticleBoxQS(type_calc3 x1, type_calc3 x2, type_calc num_den_, int3 num_macro){ //QS - quiet start
+void Species::loadParticleBoxQS(type_calc3 xc, type_calc3 sides, type_calc num_den_, int3 num_macro){ //QS - quiet start
     /*x1 - starting vertex of box
       x2 - opposite vertex of box
       num den - 
       num_macro - number of macro particles per axis*/
-    type_calc box_vol = (x2[0]-x1[0])*(x2[1]-x1[1])*(x2[2]-x1[2]);
+    type_calc box_vol = sides[0]*sides[1]*sides[2];
     int num_macro_tot = (num_macro[0]-1)*(num_macro[1]-1)*(num_macro[2]-1);
     type_calc num_micro = num_den_ * box_vol;
     type_calc macro_weight = num_micro/num_macro_tot; 
 
-    std::cout << "Quiet loading (uniform spacing) particle " << name << " in a box of volume : "<< box_vol << " with number of microparticles: " << num_micro << "\nwith number of macroparticles: " << num_macro_tot << " with grid of macroparticles: " << num_macro << " and mass of macroparticle: " << macro_weight << "\n\n";
+    std::cout << "Quiet Start, loading (uniform spacing) particle " << name << " in a box of volume : "<< box_vol << " with number of microparticles: " << num_micro << "\nwith number of macroparticles: " << num_macro_tot << " with grid of macroparticles: " << num_macro << " and mass of macroparticle: " << macro_weight << "\n\n";
 
     particles.reserve(num_macro_tot);
 
     //particle grid spacing
-    type_calc di = (x2[0] - x1[0])/(num_macro[0]-1);
-    type_calc dj = (x2[1] - x1[1])/(num_macro[1]-1);
-    type_calc dk = (x2[2] - x1[2])/(num_macro[2]-1);
+    type_calc di = (sides[0])/(num_macro[0]-1);
+    type_calc dj = (sides[1])/(num_macro[1]-1);
+    type_calc dk = (sides[2])/(num_macro[2]-1);
+
+    type_calc3 x1 = xc-sides/2;
+    type_calc3 x2 = xc+sides/2;
 
     type_calc3 pos{};
     type_calc3 vel{};
@@ -300,9 +303,9 @@ void Species::loadParticleBoxQS(type_calc3 x1, type_calc3 x2, type_calc num_den_
                 vel = {0, 0, 0}; //stationary particle;
 
                 //shifting of particles that are on max faces of grid back to domain
-                if(pos[0] == x2[0]) pos[0] -= 1e-4*di;
-                if(pos[1] == x2[1]) pos[1] -= 1e-4*dj;
-                if(pos[2] == x2[2]) pos[2] -= 1e-4*dk;
+                if(pos[0] >= x2[0]) pos[0] -= 5e-4*di;
+                if(pos[1] >= x2[1]) pos[1] -= 5e-4*dj;
+                if(pos[2] >= x2[2]) pos[2] -= 5e-4*dk;
 
                 w = 1;
                 if(i == 0 || i == num_macro[0]-1) w*=0.5;
@@ -314,6 +317,56 @@ void Species::loadParticleBoxQS(type_calc3 x1, type_calc3 x2, type_calc num_den_
         }
     }
 };
+
+void Species::loadParticleBoxQS(type_calc3 xc, type_calc3 sides, type_calc num_den_){ //QS - quiet start
+    /*x1 - starting vertex of box
+      x2 - opposite vertex of box
+      num den - 
+      num_macro - number of macro particles per axis*/
+    type_calc box_vol = sides[0]*sides[1]*sides[2];
+    // int num_macro_tot = (num_macro[0]-1)*(num_macro[1]-1)*(num_macro[2]-1);
+    type_calc num_micro = num_den_ * box_vol;
+    int num_macro_tot = int(num_micro/mpw0);
+    int grid_spacing = std::cbrt(num_macro_tot);
+    int3 grid(grid_spacing);
+    num_macro_tot = std::pow(grid_spacing,3);
+
+    std::cout << "Quiet Start, loading (uniform spacing) particle " << name << " in a box of volume : "<< box_vol << " with number of microparticles: " << num_micro << "\nwith number of macroparticles: " << num_macro_tot << " with grid of macroparticles: " << grid << " and mass of macroparticle: " << mpw0<< "\n\n";
+    std::cout << std::flush;
+    particles.reserve(num_macro_tot);
+
+    //particle grid spacing
+    type_calc di = (sides[0])/(grid[0]-1);
+    type_calc dj = (sides[1])/(grid[1]-1);
+    type_calc dk = (sides[2])/(grid[2]-1);
+
+    type_calc3 x1 = xc-sides/2;
+    type_calc3 x2 = xc+sides/2;
+
+    type_calc3 pos{};
+    type_calc3 vel{};
+    type_calc w{}; //number weight for mass of macroparticle to counterpart not equal cell volumes
+
+    for(int i = 0; i < grid[0]; i++){
+        for(int j = 0; j < grid[1]; j++){
+            for(int k = 0; k < grid[2]; k++){
+
+                pos = {x1[0] + i*di,
+                       x1[1] + j*dj, 
+                       x1[2] + k*dk};
+                vel = {0, 0, 0}; //stationary particle;
+
+                //shifting of particles that are on max faces of grid back to domain
+                if(pos[0] >= x2[0]) pos[0] -= 5e-4*di;
+                if(pos[1] >= x2[1]) pos[1] -= 5e-4*dj;
+                if(pos[2] >= x2[2]) pos[2] -= 5e-4*dk;
+
+                addParticle(pos, vel, mpw0);
+            }
+        }
+    }
+};
+
 void Species::loadParticleBoxThermal(type_calc3 x0, type_calc3 sides, type_calc num_den_, type_calc T){
     type_calc box_vol = sides[0]*sides[1]*sides[2];
     type_calc num_micro = num_den_ * box_vol;
@@ -349,6 +402,131 @@ void Species::loadParticleBoxThermal(type_calc3 x0, type_calc3 sides, type_calc 
     }
     std::cout << "\rLoaded number of macroparticles: " << particles.size()<< "\n";
 
+};
+
+void Species::loadParticleSphereThermal(type_calc3 x0, type_calc r, type_calc num_den_, type_calc T){
+    type_calc box_vol = 4/3*Const::pi*r*r*r;
+    type_calc num_micro = num_den_ * box_vol;
+    size_t num_macro = (size_t)(num_micro/mpw0); 
+    // this->mpw0 = macro_weight;
+
+    std::cout << "Loading particle " << name << " in a sphere of volume : "<< box_vol << " with number of microparticles: " << num_micro << " with number of macroparticles: " << num_macro << " and weigh of macroparticle: " << this->mpw0 << std::endl;
+    if(num_macro < 1){
+        throw std::invalid_argument("number of macroparticles less than 1, change initial values\n");
+    }
+
+    this->particles.reserve(num_macro);
+
+    type_calc3 pos;
+    type_calc3 vel;
+
+    int every_1_pm = num_macro/100;
+    if(every_1_pm < 1){
+        every_1_pm = 1;
+    }else{
+        while(every_1_pm > 1e6){
+            every_1_pm /= 10;
+        }
+    }
+    for(size_t i = 0; i < num_macro; i++){
+        if(i%every_1_pm==0){
+            std::cout << "\r                                         \rloaded: " << (type_calc)i/num_macro*100.0 << "%" << std::flush;
+        }
+        type_calc r_rnd = r*std::cbrt(rnd());
+        type_calc phi = 2*Const::pi*rnd();
+        type_calc sin_phi = std::sin(phi);
+        type_calc cos_phi = std::cos(phi);
+        type_calc cos_theta = 2*rnd() - 1;
+        type_calc sin_theta = std::sqrt(1-cos_theta*cos_theta);
+        pos = x0 + type_calc3{r_rnd*sin_theta*cos_phi, r_rnd*sin_theta*sin_phi, r_rnd*cos_theta};
+        vel = sampleV3th(T);
+        addParticle(pos, vel, mpw0);
+    }
+    std::cout << "\rLoaded number of macroparticles: " << particles.size()<< "\n";
+
+};
+
+void Species::loadLangumir(type_calc lambda, type_calc A, type_calc num_den_, type_calc T){
+    type_calc box_vol = world.getL()[0]*world.getL()[1]*world.getL()[2];
+    type_calc num_micro = num_den_ * box_vol;
+    size_t num_macro = (size_t)(num_micro/mpw0);
+    type_calc k = 2*Const::pi/lambda;
+    // this->mpw0 = macro_weight;
+
+    std::cout << "Loading Lagumir " << name << " in a whole domain of volume : "<< box_vol << " with number of microparticles: " << num_micro << " with number of macroparticles: " << num_macro << " and weigh of macroparticle: " << this->mpw0 << std::endl;
+    if(num_macro < 1){
+        throw std::invalid_argument("number of macroparticles less than 1, change initial values\n");
+    }
+
+    this->particles.reserve(num_macro);
+
+    type_calc3 pos;
+    type_calc3 vel;
+
+    type_calc3 xmin = world.getXc()-world.getL()/2;
+    type_calc3 xmax = world.getXc()+world.getL()/2;
+
+    int every_1_pm = num_macro/100;
+    if(every_1_pm < 1){
+        every_1_pm = 1;
+    }else{
+        while(every_1_pm > 1e6){
+            every_1_pm /= 10;
+        }
+    }
+    for(size_t i = 0; i < num_macro; i++){
+        if(i%every_1_pm==0){
+            std::cout << "\r                                         \rloaded: " << (type_calc)i/num_macro*100.0 << "%" << std::flush;
+        }
+        type_calc x = rnd(xmin[0], xmax[0]);
+        pos = {x+ A*std::sin(k*x), rnd(xmin[1], xmax[1]), rnd(xmin[2], xmax[2])};
+        vel = sampleV3th(T);
+        addParticle(pos, vel, mpw0);
+    }
+    std::cout << "\rLoaded number of macroparticles: " << particles.size()<< "\n";
+
+};
+void Species::move(type_calc3 dx, Rectangle& rec){
+    for(Particle& part: particles){
+        if(rec.inObject(part.pos)){
+            if(world.inBounds(part.pos + dx)){
+                part.pos+=dx;
+                // std::cout << "moved:!\n";
+            }      
+        }
+    }
+};
+void Species::move(type_calc3 dx){
+    dx = dx.elWiseMult(world.getL());
+    for(Particle& part: particles){
+        part.pos+=dx;
+        if(!world.inBounds(part.pos)){
+            part.pos-= dx;
+            // std::cout << "moved:!\n";
+        }      
+    }
+    // int np = particles.size();
+    // for(int p = 0; p < np; p ++){
+    //     if(particles[p].macro_weight == 0){
+    //         particles[p] = std::move(particles[np-1]);
+    //         p--;
+    //         np--;
+    //     }
+    // }
+    // particles.erase(particles.begin() + np, particles.end());
+
+};
+
+void Species::move(type_calc lambda, type_calc A){
+    type_calc k = 2*Const::pi/lambda;
+    for(Particle& part: particles){
+        type_calc dx = A*std::sin(k*part.pos[0])*world.getL()[0];
+        part.pos[0]+=dx;
+        if(!world.inBounds(part.pos)){
+            part.pos[0] -= dx;
+            // std::cout << "moved:!\n";
+        }      
+    }
 };
 
 

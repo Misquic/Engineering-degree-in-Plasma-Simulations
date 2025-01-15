@@ -128,6 +128,8 @@ void Output::screenOutput(World &world, std::vector<Species> &species)
 	for (Species &sp:species)
 		std::cout<<std::setprecision(3)<<"\t "<<sp.name<<":"<<sp.getNumParticles()<< " ";
 	//std::cout<<std::endl;
+	std::cout << std::flush;
+
 }
 
 //file stream handle
@@ -143,7 +145,7 @@ void Output::diagOutput(World &world, std::vector<Species> &species)
 	//is the file open?
 	if (!f_diag.is_open())
 	{
-		f_diag.open("runtime_diags.csv");
+		f_diag.open("results/runtime_diags.csv");
 		f_diag<<"ts,time,wall_time";
 		for (Species &sp:species)
 			f_diag<<",mp_count."<<sp.name<<",real_count."<<sp.name

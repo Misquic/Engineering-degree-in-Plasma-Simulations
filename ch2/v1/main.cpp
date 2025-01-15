@@ -14,8 +14,8 @@
 int main(){
 
     //instantiate world
-    World world(21, 21, 21, {-0.1, -0.1, 0.0}, {0.1, 0.1, 0.2});
-    world.setTime(2e-10, 1e4);
+    World world(31, 31, 31, {-0.1, -0.1, 0.0}, {0.1, 0.1, 0.2});
+    world.setTime(2e-10, 1e5);
 
     //instantiate species
     std::vector<Species> species;
@@ -27,10 +27,11 @@ int main(){
 
     int3 num_ions_grid = {41, 41, 41};
     int3 num_eles_grid = {21, 21, 21};
-    species[0].loadParticleBoxQS(world.getX0(), world.getXm(), 1e11, num_ions_grid);
-    species[1].loadParticleBoxQS(world.getX0(), world.getXc(), 1e11, num_eles_grid);
-    // species[0].loadParticleBox(world.getX0(), world.getXm(), 1e11, 41*41*41);
-    // species[1].loadParticleBox(world.getX0(), world.getXc(), 1e11, 21*21*21);
+    // species[0].loadParticleBoxQS(world.getX0(), world.getXm(), 1e11, num_ions_grid);
+    species[0].loadParticleBox(world.getX0(), world.getXm(), 1e11, 41*41*41);
+    type_calc3 L = world.getXm()-world.getX0();
+    species[1].loadParticleBoxQS(world.getXc() -L/2 + type_calc3{0.025*L[0], 0, 0}, world.getXc()+L/2, 1e11, num_eles_grid);
+    // species[1].loadParticleBox(world.getXc() -L/2 + type_calc3{0.025*L[0], 0, 0}, world.getXc()+L/2, 1e11, 21*21*21);
     
     for ( Species &sp : species ){
         std::cout<< sp.name << " has " << sp.getNumParticles() << " particles" << std::endl;

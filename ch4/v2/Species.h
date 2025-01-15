@@ -61,7 +61,13 @@ public:
     //void addParticle(Particle particle); //not used, to do?
     void loadParticleBox(type_calc3 x1, type_calc3 x2, type_calc num_den, type_calc num_macro);
     void loadParticleBoxQS(type_calc3 x1, type_calc3 x2, type_calc num_den, int3 num_macro);
+    void loadParticleBoxQS(type_calc3 x1, type_calc3 x2, type_calc num_den);
     void loadParticleBoxThermal(type_calc3 x0, type_calc3 sides, type_calc num_den, type_calc T);
+    void loadParticleSphereThermal(type_calc3 x0, type_calc r, type_calc num_den, type_calc T);
+    void loadLangumir(type_calc lambda, type_calc A, type_calc num_den_, type_calc T);
+    void move(type_calc3 dx, Rectangle& rec);
+    void move(type_calc3 dx);
+    void move(type_calc lambda, type_calc A);
 
     /*for diagnostics and outputs*/
     type_calc  getMicroCount();                         // calculate and return all number of micro particles
@@ -79,7 +85,7 @@ public:
     const Particle& getConstPartRef(int i) const;          //get constant reference to particle (following encapsulation principles)
 
     //for advance
-    type_calc3 sampleReflectedVelocity(const type_calc3& pos, const type_calc len, const type_calc3& n) const;
+    type_calc3 sampleReflectedVelocity(const type_calc3& pos, const type_calc v_mag1, const type_calc3& n) const;
     type_calc sampleVth(const type_calc T) const;
     type_calc3 sampleV3th(const type_calc T) const; 
     void sampleVthVariableMpw(const type_calc T, type_calc& set_vel, type_calc& set_mpw) const; //TODO implemet it and particle merge?

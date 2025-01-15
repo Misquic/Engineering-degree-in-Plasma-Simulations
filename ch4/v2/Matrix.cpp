@@ -1,6 +1,8 @@
 #include "Matrix.h"
 #include <iostream>
+#include <sstream>
 #include <cassert>
+#include <cmath>
 
 ////////////////////////////////// ROW /////////////////////////////////////////////
 
@@ -102,6 +104,10 @@ tcvector Matrix::operator*(const tcvector& v) const{
         ret[u] = 0;
         for(int i = 0; i < nvals; i++){
             if(row.col[i] >=0 ){
+                if(std::isnan(row.a[i])|| std::isnan(v[row.col[i]])){
+                    throw std::runtime_error("matrix operator* nan\n");
+                }
+                
                 ret[u]+= row.a[i] * v[row.col[i]];
             }
             else break; //end at the first -1 in col
@@ -138,14 +144,19 @@ void Matrix::clearRow(int r){
 };
 Matrix Matrix::diagSubtract(const tcvector& v) const{
     Matrix M(*this);	//make a copy
-	for (int i = 0; i < n_unknowns; i++){
+	for(size_t i = 0; i < n_unknowns; i++){
+        #ifdef DEBUG
+        if(std::isnan((*this)(i,i) - v[i])){
+            throw std::runtime_error("Matrix diagSubtract nan");
+        }
+        #endif
         M(i,i) = (*this)(i,i) - v[i];
     }
     return M;
 };
 Matrix Matrix::invDiagonal() const{
     Matrix ret(this->n_unknowns);
-    for(int i = 0; i < n_unknowns; i++){
+    for(size_t i = 0; i < n_unknowns; i++){
         ret(i,i) = 1/(*this)(i,i);
     }
     return ret;
@@ -153,7 +164,7 @@ Matrix Matrix::invDiagonal() const{
 type_calc Matrix::multiplyRow(int r, const tcvector& v) const{
     const Row<nvals>& row = rows[r];
     type_calc sum = 0;
-    for(int i = 0; i < nvals; i++){
+    for(size_t i = 0; i < nvals; i++){
         if(row.col[i]>=0) sum+=row.a[i]*v[row.col[i]];
         else break;
     }
@@ -166,7 +177,7 @@ tcvector operator-(const tcvector& left, const tcvector& right) noexcept{
     size_t n_unknowns = left.size();
     assert(n_unknowns==right.size());
     tcvector ret(n_unknowns);
-    for(int i = 0; i < n_unknowns; i++){
+    for(size_t i = 0; i < n_unknowns; i++){
         ret[i] = left[i] - right[i];
     }
     return ret;
@@ -175,16 +186,23 @@ tcvector operator+(const tcvector& left, const tcvector& right) noexcept{
     size_t n_unknowns = left.size();
     assert(n_unknowns==right.size());
     tcvector ret(n_unknowns);
-    for(int i = 0; i < n_unknowns; i++){
+    for(size_t i = 0; i < n_unknowns; i++){
         ret[i] = left[i] + right[i];
     }
     return ret;
 };
-type_calc operator*(const tcvector& left, const tcvector& right) noexcept{
+type_calc operator*(const tcvector& left, const tcvector& right){
     size_t n_unknowns = left.size();
     assert(n_unknowns==right.size());
     type_calc ret{};
-    for(int i = 0; i < n_unknowns; i++){
+    for(size_t i = 0; i < n_unknowns; i++){
+        #ifdef DEBUG
+        if(std::isnan(left[i]) || std::isnan(right[i])){
+            std::stringstream sstr;
+            sstr << "type_calc operator*(const tcvector& left, const tcvector& right) left: " << left[i] << " right: " << right[i] << " i: " << i << "\n";
+            throw std::runtime_error(sstr.str());
+        }
+        #endif
         ret += left[i] * right[i];
     }
     return ret;
@@ -193,7 +211,7 @@ type_calc operator*(const tcvector& left, const tcvector& right) noexcept{
 tcvector operator*(const type_calc val, const tcvector& v) noexcept{
     size_t n_unknowns = v.size();
     tcvector ret(n_unknowns);
-    for(int i = 0; i < n_unknowns; i++){
+    for(size_t i = 0; i < n_unknowns; i++){
         ret[i] = v[i] * val;
     }
     return ret;

@@ -45,11 +45,10 @@ public:
     /*methods*/
     void setPhi(type_calc phi) noexcept;
     type_calc getPhi() noexcept;
-    bool isMovable() noexcept;
     // virtual std::ostream print();
     virtual void print(std::ostream& out) const;
     
-    virtual bool inObject(type_calc3 x) const = 0;
+    virtual bool inObject(const type_calc3& x) const = 0;
     virtual void lineIntersect(const type_calc3& x1, const type_calc3& x2, type_calc& tp, type_calc3& pos, type_calc3& n) const = 0; //return tp, x_intersection, normal to surface at the point of intersection
     
     friend std::ostream& operator<<(std::ostream& out, const Object& obj);
@@ -80,7 +79,7 @@ public:
     virtual Sphere& operator=(Sphere&& other) noexcept;                //uses Object move operator= and copies radius
 
     virtual void print(std::ostream& out) const override;
-    virtual bool inObject(type_calc3 x) const override;
+    virtual bool inObject(const type_calc3& x) const override;
     virtual void lineIntersect(const type_calc3& x1, const type_calc3& x2, type_calc& tp, type_calc3& pos, type_calc3& n) const override;
 
 
@@ -116,7 +115,7 @@ public:
     virtual Rectangle& operator=(Rectangle&& other) noexcept;             //uses Object move operator= and copies radius
 
     virtual void print(std::ostream& out) const override;
-    virtual bool inObject(type_calc3 x) const override;
+    virtual bool inObject(const type_calc3& x) const override;
     virtual void lineIntersect(const type_calc3& x1, const type_calc3& x2, type_calc& t_entry, type_calc3& pos, type_calc3& n) const override; //return tp, point of intersection and normal to reflected surface
 
     friend std::ostream& operator<<(std::ostream& out, Rectangle obj);

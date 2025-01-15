@@ -34,6 +34,8 @@ public:
     void normalise(); //
     Vec3<data_type> unit() const;
     Vec3<data_type> cross(const Vec3<data_type>& other) const;
+    void rotate(Vec3<data_type> axis_unit_vec, type_calc sin, type_calc cos);
+    Vec3<data_type> elWiseMult(const Vec3<data_type>& other) const;  //elementwise multiplication
 
     /*operators[]*/
     data_type& operator[](int i);
@@ -57,7 +59,6 @@ public:
     Vec3<data_type> operator-(const Vec3<data_type>& other) const;
     data_type       operator*(const Vec3<data_type>& other) const;  //dot multiplication
     Vec3<data_type> operator/(const Vec3<data_type>& other) const;  //elementwise division
-    Vec3<data_type> elWiseMult(const Vec3<data_type>& other) const;  //elementwise multiplication
     void operator+=(const Vec3<data_type>& other);
     void operator-=(const Vec3<data_type>& other);
     void operator*=(const Vec3<data_type>& other) = delete;
@@ -112,12 +113,21 @@ Vec3<data_type> Vec3<data_type>::unit() const{
     #endif
     return Vec3<data_type>( (*this)/l );
 
-    //return Vec3<data_type>( {0,0,0} );
+    //return Vec3<data_type>( {0,0,0} ); 
 };
 template <class data_type>
 Vec3<data_type> Vec3<data_type>::cross(const Vec3<data_type>& other) const{
     return Vec3<data_type>( data[1]*other.data[2] - data[2]*other.data[1] , data[2]*other.data[0] - data[0]*other.data[2] , data[0]*other.data[1] - data[1]*other.data[0] );
 };
+
+template <class data_type>
+void Vec3<data_type>::rotate(Vec3<data_type> axis_unit_vec, type_calc sin, type_calc cos){
+    Vec3<data_type> v_perrallel = ((*this)*axis_unit_vec)*axis_unit_vec;
+    Vec3<data_type> v_perpendicular = (*this)-v_perrallel;
+    v_perpendicular = cos*v_perpendicular + sin * (axis_unit_vec.cross(*this));
+    (*this) = v_perrallel + v_perpendicular;
+};
+
 
 /*operators[]*/
 template <class data_type>

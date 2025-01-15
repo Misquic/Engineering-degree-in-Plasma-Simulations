@@ -25,6 +25,8 @@ send/
 results_old/
 results_debug/
 results_save_discharge_44mins/
+v3/
+
 
 #folders with vscode config
 .vscode/

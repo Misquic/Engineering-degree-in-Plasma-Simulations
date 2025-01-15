@@ -23,10 +23,12 @@ T parseArgument(const std::vector<std::string>& args, const std::string& option,
             std::istringstream iss(args[i + 1]);
             T value;
             if (iss >> value){
+                std::cout << " option: " + option + " = " << value << "\n";
                 return value;
             }
         }
     }
+    std::cout << " option: " + option + " = " << defaultValue << "\n";
     return defaultValue;
 }
 

@@ -14,6 +14,7 @@ class Species;
 
 class World{
 protected:
+    enum             NodeType{REGULAR, NEUMANN, DIRICHLET};  //enum for node types
     type_calc3 x0;  //mesh origin
     type_calc3 dx;  //cell spacing
     type_calc3 inv_dx; // inverse of dx
@@ -22,7 +23,7 @@ protected:
 
     /*time*/
     type_calc dt = 1e-4;     //time step
-    int num_ts = 0;     //time step
+    int num_ts = 0;     //number of time steps
     int ts = -1;     //time step
     type_calc time = 0;
     std::chrono::time_point<std::chrono::high_resolution_clock> time_start;
@@ -87,8 +88,9 @@ public:
 
     //type_calc3 getTs() const;
     void computeChargeDensity(std::vector<Species>& species);
-    bool inBounds(type_calc3 pos);
-    void addInlet(std::string face = "-z", type_calc phi_set = 0, int node_type = 2);
+    bool inBounds(const type_calc3& pos);
+    void addInlet(std::string face, type_calc phi_set = 0, int node_type = DIRICHLET);
+    void dirichletBoundries();
 
     /*Objects*/
     void computeObjectID();

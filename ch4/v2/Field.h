@@ -176,14 +176,14 @@ void Field<data_type>::scatter(type_calc3 lc, data_type val){
     std::vector<data_type>& data_i1j = data[i+1][j];
     std::vector<data_type>& data_i1j1 = data[i+1][j+1];
 
-    // data[i][j][k]       += (data_type)val * (one_di) * (one_dj) * (one_dk);
-    // data[i][j][k+1]     += (data_type)val * (one_di) * (one_dj) * (dk);
-    // data[i][j+1][k]     += (data_type)val * (one_di) * (dj)     * (one_dk);
-    // data[i][j+1][k+1]   += (data_type)val * (one_di) * (dj)     * (dk);
-    // data[i+1][j][k]     += (data_type)val * (di)     * (one_dj) * (one_dk);
-    // data[i+1][j][k+1]   += (data_type)val * (di)     * (one_dj) * (dk);
-    // data[i+1][j+1][k]   += (data_type)val * (di)     * (dj)     * (one_dk);
-    // data[i+1][j+1][k+1] += (data_type)val * (di)     * (dj)     * (dk);
+    // data[i][j][k]       += val * one_di * one_dj * one_dk;
+    // data[i][j][k+1]     += val * one_di * one_dj * dk;
+    // data[i][j+1][k]     += val * one_di * dj     * one_dk;
+    // data[i][j+1][k+1]   += val * one_di * dj     * dk;
+    // data[i+1][j][k]     += val * di     * one_dj * one_dk;
+    // data[i+1][j][k+1]   += val * di     * one_dj * dk;
+    // data[i+1][j+1][k]   += val * di     * dj     * one_dk;
+    // data[i+1][j+1][k+1] += val * di     * dj     * dk;
 
     data_ij[k]       += v_one_di_one_dj * one_dk;
     data_ij[k+1]     += v_one_di_one_dj * dk;

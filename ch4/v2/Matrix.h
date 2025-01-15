@@ -10,9 +10,10 @@ using tcvector = std::vector<type_calc>;
 
 template <int S>
 class Row{
-public:
+private:
     type_calc a[S]; // coefficients
     int col[S]; // collumn indexes, or -1 if not set
+public:
 
     /*constructor*/
     Row() noexcept;
@@ -25,6 +26,7 @@ public:
     Row<S>& operator=(const Row<S>& other) noexcept;  //copying operator
     Row<S>& operator=(Row<S>&& other) noexcept;       //moving operator
 
+    friend class Matrix;
 };
 
 class Matrix{
@@ -60,7 +62,7 @@ protected:
 ///////////////////////////////// TCVECTOR ///////////////////////////////////////////
 tcvector operator-(const tcvector& left, const tcvector& right) noexcept;
 tcvector operator+(const tcvector& left, const tcvector& right) noexcept;
-type_calc operator*(const tcvector& left, const tcvector& right) noexcept;
+type_calc operator*(const tcvector& left, const tcvector& right);
 
 tcvector operator*(const type_calc val, const tcvector& v) noexcept;
 tcvector operator*(const tcvector& v, const type_calc val) noexcept;

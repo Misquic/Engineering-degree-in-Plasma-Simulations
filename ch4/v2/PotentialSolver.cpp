@@ -43,7 +43,7 @@ type_calc vec::norm(const tcvector& v){
 /*constructors*/
 PotentialSolver::PotentialSolver(World& world, unsigned max_solver_it, type_calc tolerance, SolverType solver_type): world(world),
  PCG_max_solver_it{max_solver_it}, tolerance{tolerance}, A{world.ni*world.nj*world.nk}, M{world.ni*world.nj*world.nk}, solver_type{solver_type} {
-    GS_max_solver_it = 50*max_solver_it;
+    GS_max_solver_it = 30*max_solver_it;
     if(solver_type == GS){
         GS_max_solver_it = max_solver_it;
     }
@@ -198,14 +198,16 @@ bool PotentialSolver::solveNRPCG(){
         for(int i = 0; i < n_unknowns; i++){
             if(node_type[i] == REGULAR){
                 P[i] = Const::q_e*n0/(Const::eps_0*Te0)*exp((phi_[i]-phi0)/Te0); //TODO merge with above?
+                if(std::isnan(Const::q_e*n0/(Const::eps_0*Te0)*exp((phi_[i]-phi0)/Te0))){
+                    std::cerr << "nan";
+                }
             }
         }
 
         J = A.diagSubtract(P);
         #ifdef DEBUG
-        if(world.getTs() > 133){
             Output::convergenceOutput(it, world.getTs());
-        }
+        
         #endif
         if(!solvePCGlinear(J,y,F)){
             solveGSlinear(J,y,F);
@@ -230,7 +232,7 @@ bool PotentialSolver::solveNRPCG(){
 bool PotentialSolver::solvePCGlinear(const Matrix& A, tcvector& x, const tcvector& b){ // sometimes doesn't converge, if that happens it makes solution worse, sometimes GS cannot make it right fast enough then it can lead to nans
     bool converged = false;
     type_calc L2{};
-    Matrix M = A.invDiagonal();
+    //Matrix M = A.invDiagonal();
 
     tcvector g = A*x-b;
     tcvector s = M*g;
@@ -277,10 +279,10 @@ bool PotentialSolver::solveGSlinear(const Matrix &A, tcvector& x, const tcvector
     for(int it = 0; it < GS_max_solver_it; it++){
         for(int i = 0; i < A.n_unknowns; i++){
 
-            type_calc S = A.multiplyRow(i,x) - A(i,i)*x[i]; //tu coś nie tak?
+            type_calc S = A.multiplyRow(i,x) - A(i,i)*x[i];
             type_calc phi_new = (b[i] - S)/A(i,i);
             
-            x[i] = x[i] + 1.0 * (phi_new - x[i]) ;//change 1.0 to SOR_WEIGHT? //czy tu sie robi nan?
+            x[i] = x[i] + 1.0 * (phi_new - x[i]) ;//change 1.0 to SOR_WEIGHT? 
            
         }
         if(it%25 == 0){
@@ -305,8 +307,8 @@ bool PotentialSolver::solveQN(){
 };
 
 void PotentialSolver::computeEF(){
-    Field<type_calc>& phi = world.phi;  //references to avoid using world.phi
-    Field<type_calc3>& ef = world.ef;  //references to avoid using world.phi
+    Field<type_calc>& phi = world.phi;
+    Field<type_calc3>& ef = world.ef;
     type_calc3* ef_ptr = nullptr; 
 
     for(int i = 0; i < world.ni; i++){ //?write explicite without if? for performance
@@ -374,7 +376,7 @@ void PotentialSolver::buildMatrix(){
                 int u = k*world.nj*world.ni + j*world.ni + i;
                 A.clearRow(u);
 
-                if(world.object_id[i][j][k] > 0){
+                if(world.object_id[i][j][k] > 0 || world.node_type[i][j][k] == DIRICHLET){
                     A(u,u) = 1;
                     node_type[u] = DIRICHLET;
                     continue;
