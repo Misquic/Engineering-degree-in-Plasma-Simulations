@@ -25,7 +25,7 @@ send/
 results_old/
 results_debug/
 results_save_discharge_44mins/
-v3/
+rysunki/
 
 
 #folders with vscode config
@@ -43,3 +43,4 @@ v2_for_ares/
 #too big files
 langumir_2_phi_vel.mp4
 ch4/v2/animations/Langmuir/langumir_2_phi_vel.mp4
+ch4/old_v3
