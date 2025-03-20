@@ -52,7 +52,7 @@ int main(int argc, char* argv[] ){
     Config& config = Config::getInstance();
     config.setSUBCYCLING(parseArgument(args, "--subcycling", true));
     config.setMULTITHREADING(parseArgument(args, "--multithreading", true));
-    config.setNUM_THREADS(parseArgument(args, "--num_threads", (unsigned int)15));
+    config.setNUM_THREADS(parseArgument(args, "--num_threads", (unsigned int)15)); //not using will set default value
     config.setMERGING(parseArgument(args, "--merging", true));
 
     Output::modes OUTPUT = parseArgument(args, "--output", Output::modes::fields); // 0 none // 1 all // 2 only screen on // 3 only screen and fields on // 4 only screen, fields and particles on etc.
@@ -103,7 +103,7 @@ int main(int argc, char* argv[] ){
         type_calc T_eles = 10*T;
 
         // type_calc side_z = (world_ptr->getXm()[2] - world_ptr->getX0()[2])*0.9;
-        species[2].loadParticleBoxThermal(type_calc3{world_ptr->getXc()[0], world_ptr->getXc()[1], world_ptr->getXc()[2] - 0.5*world_ptr->getL()[2]*0.85}, type_calc3(world_ptr->getL()[0]*0.01, world_ptr->getL()[1]*0.01, world_ptr->getL()[2]*0.02), num_den_electrons, T_eles);
+        species[2].loadParticleBoxThermal(type_calc3{world_ptr->getXc()[0], world_ptr->getXc()[1], world_ptr->getXc()[2] + 0.5*world_ptr->getL()[2]*0.85}, type_calc3(world_ptr->getL()[0]*0.01, world_ptr->getL()[1]*0.01, world_ptr->getL()[2]*0.02), num_den_electrons, T_eles);
 
         species[0].loadParticleBoxThermal(world_ptr->getXc(), type_calc3(world_ptr->getL()[0], world_ptr->getL()[1], world_ptr->getL()[2]*0.9), num_den_neutrals, T);
         
@@ -157,10 +157,17 @@ int main(int argc, char* argv[] ){
     }
 
     // Output::fields(*world_ptr, species);
-    solver_ptr->solve();
+    Field<type_calc> phi_0 = world_ptr->phi;
+    while(true){
+        type_calc start = world_ptr->getWallTime();
+        solver_ptr->solve();
+        type_calc stop = world_ptr->getWallTime();
+        std::cout << "\nTime:" << stop - start << "\n";
+        world_ptr->phi = phi_0;
+    }
+    return 0;
     solver_ptr->computeEF();
     Output::fieldsOutput(*world_ptr, species);
-
     // world_ptr->setTimeStart();
     type_calc dt = world_ptr->getDt();
     while(world_ptr->advanceTime()){

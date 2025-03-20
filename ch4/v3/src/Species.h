@@ -20,6 +20,12 @@ public:
     Particle(type_calc x, type_calc y, type_calc z, type_calc u, type_calc v, type_calc w, type_calc macro_weight) noexcept;
     Particle(type_calc3 pos, type_calc3 vel, type_calc macro_weight) noexcept;
 
+    Particle(Particle&& other) noexcept;
+    // Particle(const Particle& other) = delete;
+    Particle(const Particle& other) noexcept;
+    Particle& operator=(Particle&& other) noexcept;
+    void operator=(const Particle& other) = delete;
+
 };
 
 class Species{

@@ -32,6 +32,7 @@ unsigned int Config::setNUM_THREADS(unsigned int n){
             dmsg("setNUM_THREADS not succesfull, wrong value\n");
             return m_NUM_THREADS;
         }
+        
         m_NUM_THREADS = n;
     }
     return m_NUM_THREADS;

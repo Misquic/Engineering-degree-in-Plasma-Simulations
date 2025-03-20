@@ -15,7 +15,7 @@ public:
 
 private:
     bool m_MULTITHREADING = true; 
-    unsigned int m_NUM_THREADS = 1;
+    unsigned int m_NUM_THREADS;
 public:
     bool setMULTITHREADING(bool option);
     bool getMULTITHREADING() const;
@@ -42,7 +42,9 @@ public:
 
 
     Config(const Config& other) = delete;
+    Config(Config&& other) = delete;
     void operator=(const Config& other) = delete;
+    void operator=(Config&& other) = delete;
 
 private:
     Config();
@@ -52,7 +54,7 @@ private:
 
 //////////////// functions ////////////////////////////////////
 
-std::vector<size_t> splitIntoChunks(size_t size);
+std::vector<size_t> splitIntoChunks(size_t size); //should move it to ThreadPool.h
 
 
 

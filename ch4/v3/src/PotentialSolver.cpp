@@ -165,7 +165,16 @@ bool PotentialSolver::solveGS(){
     return converged;
 };
 //??? pointers slower slightly due to dereference?
-
+bool checkVec(const tcvector& vec){
+    bool result = false;
+    for(int i = 0; i < vec.size(); i++){
+        if(std::isnan(vec[i])){
+            std::cerr << "nan in vec:" << i << "\n";
+            result = true;
+        }
+    }
+    return result;
+}
 bool PotentialSolver::solveNRPCG(){
     const int NR_MAX_IT = 20; //maximum number of NR iterations
     const type_calc NR_TOL = 1e-3;
@@ -187,7 +196,7 @@ bool PotentialSolver::solveNRPCG(){
     bool converged = false;
 
     for(int it = 0; it < NR_MAX_IT; it++){
-        std::cout << "NRPCG starting iteration nr" << it+1 << "\n";
+        std::cout << "\rNRPCG starting iteration nr" << it+1 << "\n";
         tcvector F = A*phi_-rho_; //calculate F by first subtracting linear term
 
         for(int i = 0; i < n_unknowns; i++){ // subtract b(x) on regular nodes
@@ -230,50 +239,62 @@ bool PotentialSolver::solveNRPCG(){
     vec::inflate(phi_, world.phi);
     return converged;
 };
+
 bool PotentialSolver::solvePCGlinear(const Matrix& A, tcvector& x, const tcvector& b){ // sometimes doesn't converge, if that happens it makes solution worse, sometimes GS cannot make it right fast enough then it can lead to nans
     bool converged = false;
     type_calc L2{};
     //Matrix M = A.invDiagonal();
 
+    // checkVec(x);
+    // checkVec(b);
     tcvector g = A*x-b;
+    // checkVec(g);
     tcvector s = M*g;
+    // checkVec(s);
     tcvector d = -1*s;
+    // checkVec(d);
 
     //preallocate
-    tcvector z(d.size());
-    const unsigned logInterval = std::max(1u, PCG_max_solver_it / 100);
+    tcvector z;z.reserve(d.size());
 
+    // const unsigned logInterval = std::max(1u, PCG_max_solver_it / 100);
 
-    for(unsigned it = 0; it < PCG_max_solver_it; it ++){
-        #ifdef DEBUG
+    for(unsigned int it = 0; it < PCG_max_solver_it; it ++){
+#ifdef DEBUG
         if(it%int(PCG_max_solver_it*0.01)==0){
         }
-        #endif
-        z = A*d;
+#endif
+        z = A*d;                                                                          //matrix mult
+        // checkVec(d);
+        // checkVec(z);
         type_calc alpha = g*s;
         type_calc beta = d*z;
-        #ifdef DEBUG
         if(beta == 0){
             std::cerr << "PotentialSolver::solvePCGlinear: beta = 0" << beta << "\n";
+            throw std::runtime_error("division by 0, beta = 0\n");
+            
         }
-        #endif
+#ifdef DEBUG
+#endif
 
         x = x + (alpha/beta)*d;
+        // checkVec(x);
         g = g + (alpha/beta)*z;
-        s = M*g;
-
+        // checkVec(g);
+        s = M*g;                                                                          //matrix mult
+        // checkVec(s);
         beta = alpha;
         alpha = g*s;
-        // tu gdzieś dochodzi do nan
         d = (alpha/beta)*d - s;
+        // checkVec(d);
         L2 = vec::norm(g);
-        #ifdef DEBUG
-        if(it%logInterval==0){
-            std::cout << "\r                                      \r"<< type_calc(it)/PCG_max_solver_it*100 << "% PCG, L2: " << L2;
+        // if(it%logInterval==0){
+        //     std::cout << "\r                                      \r"<< type_calc(it)/PCG_max_solver_it*100 << "% PCG, L2: " << L2;
+        // }    
 
-        }
+#ifdef DEBUG
         Output::convergenceOutput(L2,it, world.getTs());
-        #endif
+#endif
 
         if(L2 < tolerance){
             converged = true;
@@ -281,13 +302,14 @@ bool PotentialSolver::solvePCGlinear(const Matrix& A, tcvector& x, const tcvecto
         }
     }    
 
+    std::cout << "\r                                      \r"<< 100 << "% PCG" << L2 << "\n";
     if(!converged){
         std::cerr << "PCGlinear failed to converge, norm(g) = " << L2 << " tolerance = " << tolerance << " time step = " << world.getTs()<< std::endl;
 
     }
     return converged;
 
-}
+};
 
 bool PotentialSolver::solveGSlinear(const Matrix &A, tcvector& x, const tcvector& b){ //always makes solution better
     type_calc L2{};
@@ -392,7 +414,7 @@ void PotentialSolver::buildMatrix(){
     node_type = std::vector<int>(A.n_unknowns);
     
 
-    for(int k = 0; k < world.nk; k++){ //why indexex running in reverse?
+    for(int k = 0; k < world.nk; k++){ //why indexex running in reverse? //cash locality perhaps
         for(int j = 0; j < world.nj; j++){
             for(int i = 0; i < world.ni; i++){
                 int u = k*world.nj*world.ni + j*world.ni + i;

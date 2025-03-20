@@ -11,6 +11,20 @@ Particle::Particle(type_calc x, type_calc y, type_calc z, type_calc u, type_calc
 Particle::Particle(type_calc3 pos, type_calc3 vel, type_calc macro_weight) noexcept: pos{pos}, vel{vel}, macro_weight{macro_weight} {
 };
 
+Particle::Particle(Particle&& other) noexcept: pos(std::move(other.pos)), vel(std::move(other.vel)), macro_weight(other.macro_weight){
+};
+Particle::Particle(const Particle& other) noexcept: pos(other.pos), vel(other.vel), macro_weight(other.macro_weight){
+};
+
+Particle& Particle::operator=(Particle&& other) noexcept{
+    if(this!=&other){
+        pos = std::move(other.pos);
+        vel = std::move(other.vel);
+        macro_weight = other.macro_weight;
+    }
+    return *this;
+};
+
 /*Species constructors*/
 Species::Species(std::string name, type_calc mass, type_calc charge, World& world, type_calc mpw0): name{name}, mass{mass},
  charge{charge}, world{world}, mpw0{mpw0}, den{world.nn}, den_avg{world.nn}, n_sum{world.nn}, nv_sum{world.nn}, nuu_sum{world.nn},
@@ -253,10 +267,10 @@ void Species::advanceElectrons(type_calc dt){
         std::vector<std::thread> threads_advance;
         std::vector<size_t> indexes = splitIntoChunks(particles.size());
         const unsigned int num_workers = indexes.size()-1;
+        threads_advance.reserve(num_workers);
         std::vector<std::vector<size_t>> parts_to_delete(indexes.size() - 1);//vector of buffers to delete particles of that indexes
 
         dmsg("creating " << num_workers << "workers for advance electrons\n");
-        // std::cout << "creating " << num_workers << "workers for advance electrons\n";
         for(unsigned int i = 0; i < num_workers; i++){
             threads_advance.emplace_back(std::thread(&Species::advanceElectronsMultithreading, this, i, dt, indexes[i], indexes[i+1], std::ref(parts_to_delete[i])));
         }
@@ -280,8 +294,10 @@ void Species::advanceElectrons(type_calc dt){
             }
 
             std::sort(parts_to_delete_total.begin(), parts_to_delete_total.end(), std::greater<size_t>());//sort descending
+            size_t last_index = particles.size()-1;
             for(size_t p: parts_to_delete_total){
-                particles[p] = std::move(particles.back());
+                particles[p] = std::move(particles[last_index]);
+                last_index--;
             }
             particles.erase(particles.end() - parts_to_delete_total.size(), particles.end());
         }
@@ -298,13 +314,13 @@ void Species::advanceElectronsMultithreading(unsigned int thread_id, type_calc d
     dmsg("advance electrons worker "<< thread_id << "start\n");
     for(size_t p = index_start; p < index_stop; p++){
         Particle& part = particles[p];
-        #ifdef DEBUG
+#ifdef DEBUG
         for(int i = 0; i < 3; i++){
             if(std::isnan(part.pos[i])){
                 std::cerr << "thread_id " << thread_id << " nan\n";
             }
         }
-        #endif
+#endif
 
         type_calc3 lc = world.XtoL(part.pos);
         type_calc3 ef_part = world.ef.gather(lc);
@@ -320,13 +336,13 @@ void Species::advanceElectronsMultithreading(unsigned int thread_id, type_calc d
         else if(in_object){                    
             parts_to_delete.push_back(p);
         }
-        #ifdef DEBUG
+#ifdef DEBUG
         for(int i = 0; i < 3; i++){
             if(std::isnan(part.pos[i])){
                 std::cerr << "nan\n";
             }
         }
-        #endif
+#endif
     }
     dmsg("advance electrons worker "<< thread_id << "finish\n");
 
@@ -426,7 +442,7 @@ void Species::loadParticleBox(type_calc3 x1, type_calc3 x2, type_calc num_den_, 
     type_calc macro_weight = num_micro/num_macro; 
     // this->mpw0 = macro_weight;
 
-    std::cout << "Loading particle " << name << " in a box of volume : "<< box_vol << " with number of microparticles: " << num_micro << " with number of macroparticles: " << num_macro << " and weigh of macroparticle: " << macro_weight << "\n";
+    std::cout << "Loading particle " << name << " in a box of volume : "<< box_vol << " with number of microparticles: " << num_micro << " with number of macroparticles: " << num_macro << " and weight of macroparticle: " << macro_weight << "\n";
 
     particles.reserve(num_macro);
 
@@ -545,7 +561,7 @@ void Species::loadParticleBoxThermal(type_calc3 x0, type_calc3 sides, type_calc 
     size_t num_macro = (size_t)(num_micro/mpw0); 
     // this->mpw0 = macro_weight;
 
-    std::cout << "Loading particle " << name << " in a box of volume : "<< box_vol << " with number of microparticles: " << num_micro << " with number of macroparticles: " << num_macro << " and weigh of macroparticle: " << this->mpw0 << std::endl;
+    std::cout << "Loading particle " << name << " in a box of volume : "<< box_vol << " with number of microparticles: " << num_micro << " with number of macroparticles: " << num_macro << " and weight of macroparticle: " << this->mpw0 << std::endl;
     if(num_macro < 1){
         throw std::invalid_argument("number of macroparticles less than 1, change initial values\n");
     }
@@ -582,7 +598,7 @@ void Species::loadParticleSphereThermal(type_calc3 x0, type_calc r, type_calc nu
     size_t num_macro = (size_t)(num_micro/mpw0); 
     // this->mpw0 = macro_weight;
 
-    std::cout << "Loading particle " << name << " in a sphere of volume : "<< box_vol << " with number of microparticles: " << num_micro << " with number of macroparticles: " << num_macro << " and weigh of macroparticle: " << this->mpw0 << std::endl;
+    std::cout << "Loading particle " << name << " in a sphere of volume : "<< box_vol << " with number of microparticles: " << num_micro << " with number of macroparticles: " << num_macro << " and weight of macroparticle: " << this->mpw0 << std::endl;
     if(num_macro < 1){
         throw std::invalid_argument("number of macroparticles less than 1, change initial values\n");
     }
@@ -1014,8 +1030,7 @@ std::vector<std::vector<std::vector<std::vector<int>>>> Species::sortVelocitiesI
 
 void Species::merge(){
     std::stringstream out;
-    out << "Merging " << name << "\n";
-    out << "Before merge: particles size: " << particles.size() << ", energy: " << getKE() << ", momentum: " << getMomentum() << "\n";
+    out << "Merging " << name << "\nBefore merge: particles size: " << particles.size() << ", energy: " << getKE() << ", momentum: " << getMomentum() << "\n";
     // bool use_map = should_use_map();
     bool use_map = false;
     if(use_map){
@@ -1034,7 +1049,7 @@ void Species::merge(){
             for(int i = 0; i < m_vel_grid_n[0]; i++){ //loop through all velocity cells
                 for(int j = 0; j < m_vel_grid_n[1]; j++){
                     for(int k = 0; k < m_vel_grid_n[2]; k++){
-                        if(sorted_velocities_in_cell[i][j][k].size() > 10){ //merge if number of particles in velocity cell > 2
+                        if(sorted_velocities_in_cell[i][j][k].size() > 2){ //merge if number of particles in velocity cell > 2
                             std::vector<int>& velocities_cell = sorted_velocities_in_cell[i][j][k];  
                             type_calc total_weight{};
                             type_calc3 total_momentum{}, total_energy{};
@@ -1052,11 +1067,11 @@ void Species::merge(){
                             total_energy -= total_momentum.elWiseMult(total_momentum);
                             for(int i = 0; i < 3; i++){
                                 if(total_energy[i] < 0){
-                                    total_energy[i] = 0;
                                     if(total_energy[i] < -10e-5){
-                                        std::cerr << "Species::merge: " << name << " total energy < -10e-5 shifted to 0" << total_energy << "\n";
+                                        dmsg( "Species::merge: " << name << " total energy < -10e-5 shifted to 0" << total_energy << "\n");
                                         break;
                                     }
+                                    total_energy[i] = 0;
                                 }
                             }
                             type_calc3 total_energy_sqrt = {std::sqrt(total_energy[0]), std::sqrt(total_energy[1]), std::sqrt(total_energy[2])}; 
@@ -1119,7 +1134,7 @@ void Species::merge(){
         particles.erase(particles.begin() + np, particles.end());
     }
 
-    out << "After merge: particles size: " << particles.size() << ", energy: " << getKE() << ", momentum: " << getMomentum() << "\n";
+    out << name << " after merge: particles size: " << particles.size() << ", energy: " << getKE() << ", momentum: " << getMomentum() << "\n";
     std::cout << out.str();
 };
 

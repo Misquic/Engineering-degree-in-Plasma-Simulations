@@ -15,7 +15,7 @@
 template <class data_type>
 class Vec3{
 protected:
-    data_type data[3];
+    data_type m_data[3];
 public:
     /*constructors*/
     Vec3() noexcept;                                                         //normal constructor
@@ -73,29 +73,29 @@ public:
 
 /*constructors*/
 template <class data_type>
-Vec3<data_type>::Vec3() noexcept: data{0,0,0}{
+Vec3<data_type>::Vec3() noexcept: m_data{0,0,0}{
 };
 template <class data_type>
-Vec3<data_type>::Vec3(const data_type x, const data_type y, const data_type z) noexcept: data{x, y, z}{
+Vec3<data_type>::Vec3(const data_type x, const data_type y, const data_type z) noexcept: m_data{x, y, z}{
 };
 template <class data_type>
-Vec3<data_type>::Vec3(const data_type other_data[3]) noexcept: data{other_data[0], other_data[1], other_data[2]}{
+Vec3<data_type>::Vec3(const data_type other_data[3]) noexcept: m_data{other_data[0], other_data[1], other_data[2]}{
 };
 template <class data_type>
-Vec3<data_type>::Vec3(const data_type val) noexcept: data{val, val, val}{
+Vec3<data_type>::Vec3(const data_type val) noexcept: m_data{val, val, val}{
 };
 template <class data_type>
-Vec3<data_type>::Vec3(const Vec3<data_type>& other) noexcept: data{other.data[0], other.data[1], other.data[2]}{
+Vec3<data_type>::Vec3(const Vec3<data_type>& other) noexcept: m_data{other.m_data[0], other.m_data[1], other.m_data[2]}{
 };
 template <class data_type>
-Vec3<data_type>::Vec3(Vec3<data_type>&& other) noexcept: data{other.data[0], other.data[1], other.data[2]}{
+Vec3<data_type>::Vec3(Vec3<data_type>&& other) noexcept: m_data{other.m_data[0], other.m_data[1], other.m_data[2]}{
 };
 
 /*methods*/
 template <class data_type>
 void Vec3<data_type>::clear(){
     for(int i = 0; i < 3; i ++){
-        data[i] = 0;
+        m_data[i] = 0;
     }
 };
 template <class data_type>
@@ -120,7 +120,7 @@ Vec3<data_type> Vec3<data_type>::unit() const{
 };
 template <class data_type>
 Vec3<data_type> Vec3<data_type>::cross(const Vec3<data_type>& other) const{
-    return Vec3<data_type>( data[1]*other.data[2] - data[2]*other.data[1] , data[2]*other.data[0] - data[0]*other.data[2] , data[0]*other.data[1] - data[1]*other.data[0] );
+    return Vec3<data_type>( m_data[1]*other.m_data[2] - m_data[2]*other.m_data[1] , m_data[2]*other.m_data[0] - m_data[0]*other.m_data[2] , m_data[0]*other.m_data[1] - m_data[1]*other.m_data[0] );
 };
 
 template <class data_type>
@@ -135,18 +135,18 @@ void Vec3<data_type>::rotate(Vec3<data_type> axis_unit_vec, type_calc sin, type_
 /*operators[]*/
 template <class data_type>
 data_type& Vec3<data_type>::operator[](int i){
-    return data[i];
+    return m_data[i];
 };
 template <class data_type>
 const data_type& Vec3<data_type>::operator[](int i) const {
-    return data[i];
+    return m_data[i];
 }
 
 /*vec3-scalar operators*/
 template <class data_type>
 Vec3<data_type>& Vec3<data_type>::operator=(const data_type& val) noexcept{
     for(int i = 0; i < 3; i++){
-        data[i] = val;
+        m_data[i] = val;
     }
     return (*this); //nie było tego i było okej?
     
@@ -156,7 +156,7 @@ template <class data_type>
 Vec3<data_type> Vec3<data_type>::operator+(const data_type val) const{
     Vec3<data_type> ret(*this); /*probably faster than creating empty vec3 and then adding, other behaviour for field (i think so?)*/
     for(int i = 0; i < 3; i++){
-        ret.data[i] += val;
+        ret.m_data[i] += val;
     }
     return ret;
 };
@@ -164,7 +164,7 @@ template <class data_type>
 Vec3<data_type> Vec3<data_type>::operator-(const data_type val) const{
     Vec3<data_type> ret(*this);
     for(int i = 0; i < 3; i++){
-        ret.data[i] -= val;
+        ret.m_data[i] -= val;
     }
     return ret;
 };
@@ -172,7 +172,7 @@ template <class data_type>
 Vec3<data_type> Vec3<data_type>::operator*(const data_type val) const{
     Vec3<data_type> ret(*this);
     for(int i = 0; i < 3; i++){
-        ret.data[i] *= val;
+        ret.m_data[i] *= val;
     }
     return ret;
 };
@@ -186,26 +186,26 @@ Vec3<data_type> Vec3<data_type>::operator/(const data_type val) const{
     #endif
     data_type inverse_val = 1.0/val;
     for(int i = 0; i < 3; i++){
-        ret.data[i] *= inverse_val;
+        ret.m_data[i] *= inverse_val;
     }
     return ret;
 };
 template <class data_type>
 void Vec3<data_type>::operator+=(const data_type val){
     for(int i = 0; i < 3; i++){
-        data[i] += val;
+        m_data[i] += val;
     }
 };
 template <class data_type>
 void Vec3<data_type>::operator-=(const data_type val){
     for(int i = 0; i < 3; i++){
-        data[i] -= val;
+        m_data[i] -= val;
     }
 };
 template <class data_type>
 void Vec3<data_type>::operator*=(const data_type val){
     for(int i = 0; i < 3; i++){
-        data[i] *= val;
+        m_data[i] *= val;
     }
 };
 template <class data_type>
@@ -217,7 +217,7 @@ void Vec3<data_type>::operator/=(const data_type val){
     #endif
     data_type inverse_val = 1.0/val;
     for(int i = 0; i < 3; i++){
-        data[i] *= inverse_val;
+        m_data[i] *= inverse_val;
     }
 };
 
@@ -225,16 +225,17 @@ void Vec3<data_type>::operator/=(const data_type val){
 template <class data_type>
 Vec3<data_type>& Vec3<data_type>::operator=(const Vec3<data_type>& other) noexcept{
     for(int i = 0; i < 3; i++){
-        this->data[i] = other.data[i];
+        this->m_data[i] = other.m_data[i];
     }
     return *this;
 };
 template <class data_type>
 Vec3<data_type>& Vec3<data_type>::operator=(Vec3<data_type>&& other) noexcept{
     if(this != &other){
-        for(int i = 0; i < 3; i++){
-            this->data[i] = other.data[i];
-        }
+        m_data[0] = std::move(other.m_data[0]);
+        m_data[1] = std::move(other.m_data[1]);
+        m_data[2] = std::move(other.m_data[2]);
+        
     }
     return *this;
 };
@@ -242,12 +243,12 @@ template <class data_type>
 Vec3<data_type> Vec3<data_type>::operator+(const Vec3<data_type>& other) const{
     Vec3<data_type> ret(*this);
     for(int i = 0; i < 3; i++){
-        ret.data[i] += other.data[i];
+        ret.m_data[i] += other.m_data[i];
     }
     ///
     //Vec3<data_type> ret();
     //for(int i = 0; i<3; i++){
-    //    ret.data[i] = this->data[i] + other.data[i] /*which is faster?*/
+    //    ret.m_data[i] = this->m_data[i] + other.m_data[i] /*which is faster?*/
     //}
     //
     ///
@@ -257,39 +258,39 @@ template <class data_type>
 Vec3<data_type> Vec3<data_type>::operator-(const Vec3<data_type>& other) const{
     Vec3<data_type> ret(*this);
     for(int i = 0; i < 3; i++){
-        ret.data[i] -= other.data[i];
+        ret.m_data[i] -= other.m_data[i];
     }
     return ret;
 };
 template <class data_type>
 data_type Vec3<data_type>::operator*(const Vec3<data_type>& other) const{ //point multiplication
-    return data[0]*other.data[0] + data[1]*other.data[1] + data[2]*other.data[2] ;
+    return m_data[0]*other.m_data[0] + m_data[1]*other.m_data[1] + m_data[2]*other.m_data[2] ;
 };
 template <class data_type>
 Vec3<data_type> Vec3<data_type>::operator/(const Vec3<data_type>& other) const{ //elementwise division
     Vec3<data_type> ret(*this);
     for(int i = 0; i < 3; i++){
         #ifdef DEBUG
-        if(!other.data[i]){
+        if(!other.m_data[i]){
             std::cerr << "Vec3<" << typeid(data_type).name() << ">::operator/(const Vec3<data_type>& other) Division by zero\n";
         }
         #endif
-        ret.data[i] /= other.data[i];
+        ret.m_data[i] /= other.m_data[i];
     }
     return ret;
 }; 
 template<class data_type>
 Vec3<data_type> Vec3<data_type>::elWiseMult(const Vec3<data_type>& other) const{  //elementwise multiplication
-    return {data[0]*other.data[0], data[1]*other.data[1], data[2]*other.data[2]};
+    return {m_data[0]*other.m_data[0], m_data[1]*other.m_data[1], m_data[2]*other.m_data[2]};
 }; 
 template<class data_type>
 data_type Vec3<data_type>::volume() const{
-    return data[0]*data[1]*data[2];
+    return m_data[0]*m_data[1]*m_data[2];
 };
 template<class data_type>
 bool Vec3<data_type>::isNan() const{
     for(int i = 0; i < 3; i++){
-        if(std::isnan(data[i])){
+        if(std::isnan(m_data[i])){
             std::cerr << "vec3: " << *this << " nan i: " << i << " ";
             return true;
         }
@@ -299,7 +300,7 @@ bool Vec3<data_type>::isNan() const{
 template<class data_type>
 bool Vec3<data_type>::isNan(const std::string& message) const{
     for(int i = 0; i < 3; i++){
-        if(std::isnan(data[i])){
+        if(std::isnan(m_data[i])){
             std::cerr << message << " vec3: " << *this << " nan i: " << i << " ";
             return true;
         }
@@ -311,20 +312,20 @@ bool Vec3<data_type>::isNan(const std::string& message) const{
 template <class data_type>
 void Vec3<data_type>::operator+=(const Vec3<data_type>& other){
     for(int i = 0; i < 3; i++){
-        this->data[i] += other.data[i];
+        this->m_data[i] += other.m_data[i];
     }
 };
 template <class data_type>
 void Vec3<data_type>::operator-=(const Vec3<data_type>& other){
     for(int i = 0; i < 3; i++){
-        this->data[i] -= other.data[i];
+        this->m_data[i] -= other.m_data[i];
     }
 };
 
 template <class data_type>
 bool Vec3<data_type>::operator==(const Vec3<data_type>& other) const{
     for(int i = 0; i < 3; i++){
-        if(this->data[i] != other.data[i]) return false;
+        if(this->m_data[i] != other.m_data[i]) return false;
     }
     return true;
 };

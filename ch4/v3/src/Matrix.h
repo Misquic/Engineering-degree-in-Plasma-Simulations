@@ -43,6 +43,7 @@ public:
     /*operators*/
     Matrix& operator=(const Matrix& other);
     Matrix& operator=(Matrix&& other);
+    void operatorHelper(const tcvector* v, tcvector* ret, size_t start, size_t stop) const;
     tcvector operator*(const tcvector& v) const; // matrix * vector = vector
     type_calc& operator()(int r, int c); // reference to A[r,c]
     const type_calc& operator()(int r, int c) const; // for const correctness
@@ -61,6 +62,7 @@ protected:
 };
 
 ///////////////////////////////// TCVECTOR ///////////////////////////////////////////
+// bool operator==(const tcvector& left, const tcvector& right) noexcept;
 tcvector operator-(const tcvector& left, const tcvector& right) noexcept;
 tcvector operator+(const tcvector& left, const tcvector& right) noexcept;
 type_calc operator*(const tcvector& left, const tcvector& right);

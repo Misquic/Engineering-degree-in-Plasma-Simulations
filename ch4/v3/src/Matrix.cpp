@@ -1,8 +1,10 @@
-#include "Matrix.h"
 #include <iostream>
 #include <sstream>
 #include <cassert>
 #include <cmath>
+#include "Matrix.h"
+#include "Config.h"
+#include "ThreadPool.h"
 
 ////////////////////////////////// ROW /////////////////////////////////////////////
 
@@ -94,25 +96,84 @@ Matrix& Matrix::operator=(Matrix&& other){
     }
     return (*this);
 };
-tcvector Matrix::operator*(const tcvector& v) const{
-    tcvector ret(n_unknowns);
-    if(this->n_unknowns!= v.size()){
-        throw std::invalid_argument("number of unknowns in matrixes dont match dimension of vector, err3");
-    }
-    for(int u = 0; u < n_unknowns; u ++){
-        const Row<nvals>& row = rows[u]; //change to pointer?
-        ret[u] = 0;
+void Matrix::operatorHelper(const tcvector* v, tcvector* ret, size_t start, size_t stop) const{
+    for(int u = start; u < stop; u++){
+        const Row<nvals>& row = rows[u];
+        (*ret)[u] = 0;
         for(int i = 0; i < nvals; i++){
             if(row.col[i] >=0 ){
-                if(std::isnan(row.a[i])|| std::isnan(v[row.col[i]])){
+#ifdef DEBUG
+                if(std::isnan(row.a[i])|| std::isnan((*v)[row.col[i]])){
                     throw std::runtime_error("matrix operator* nan\n");
                 }
-                
-                ret[u]+= row.a[i] * v[row.col[i]];
+#endif
+                (*ret)[u]+= row.a[i] * (*v)[row.col[i]];
+                //coś zwalnia pamięć gdy jeszcze wykonują się obliczenia, 
             }
             else break; //end at the first -1 in col
         }
     }
+};
+tcvector Matrix::operator*(const tcvector& v) const{
+    tcvector ret(n_unknowns);
+    // tcvector ret_serial(n_unknowns);
+    if(this->n_unknowns!= v.size()){
+        throw std::invalid_argument("number of unknowns in matrixes dont match dimension of vector, err3");
+    }
+    
+    if(!Config::getInstance().getMULTITHREADING()){      
+        
+        for(int u = 0; u < n_unknowns; u ++){
+            const Row<nvals>& row = rows[u]; //change to pointer?
+            ret[u] = 0;
+            for(int i = 0; i < nvals; i++){
+                if(row.col[i] >=0 ){
+                    #ifdef DEBUG
+                    if(std::isnan(row.a[i])|| std::isnan(v[row.col[i]])){
+                        throw std::runtime_error("matrix operator* nan\n");
+                    }
+                    #endif
+                    
+                    ret[u]+= row.a[i] * v[row.col[i]];
+                }
+                else break; //end at the first -1 in col
+            }
+        }   
+    }else{
+        ////////////////////////// Multi ////////////////////////////////////
+        ThreadPool& thread_pool = SingletonThreadPool::getInstance();
+        thread_pool.waitForCompletion();
+        std::vector<size_t> indexes = splitIntoChunks(n_unknowns);
+        std::queue<std::future<void>> results;
+        // std::cout << "pre: " << thread_pool.queueSize();
+        for(unsigned int i = 0; i < indexes.size()-1; i++){
+            // thread_pool.AddTask(operatorHelper, v, ret, indexes[i], indexes[i+1]);
+            results.emplace(thread_pool.AddTask([this](const tcvector* v_lamb, tcvector* ret_lamb, size_t start, size_t stop){this->operatorHelper(v_lamb, ret_lamb, start, stop);}, &v, &ret, indexes[i], indexes[i+1]));
+        }
+        // std::cout << "1\n";
+        thread_pool.waitForCompletion();
+
+        // while (results.size())
+        // {
+        //     results.front().get();
+        //     results.pop();
+        // }
+        // using namespace std::chrono_literals;
+        // std::this_thread::sleep_for(999us);
+        // std::this_thread::sleep_for(1ms);
+        // while(thread_pool.queueSize()){
+        //    std::cout << "sleep\n";
+        // }
+        // std::cout << "post: " << thread_pool.queueSize();
+
+        /////////////////////////// Multi ///////////////////////////////////
+    }
+    
+    // if(!(ret_serial == ret)){
+    //     dmsg("Different results in matrix*vec");
+    //     throw(std::runtime_error("Different results in matrix*vec"));
+    // }
+
     return ret;
 };
 type_calc& Matrix::operator()(int r, int c){
