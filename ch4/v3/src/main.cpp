@@ -37,14 +37,14 @@ int main(int argc, char* argv[] ){
     }
     std::cerr.rdbuf(errorFile.rdbuf()); 
 
-    if(parseArgument(args, "--redirect")){
-        std::ofstream coutFile("outputs/output.txt"); // File to writing std::cout
-        if(!coutFile.is_open()){
-            std::cout << "Cannot open file to write std::cout !" << std::endl;
-            return 1;
-        }
-        std::cout.rdbuf(coutFile.rdbuf()); 
-    }
+    // if(parseArgument(args, "--redirect")){
+    //     std::ofstream coutFile("outputs/output.txt"); // File to writing std::cout
+    //     if(!coutFile.is_open()){
+    //         std::cout << "Cannot open file to write std::cout !" << std::endl;
+    //         return 1;
+    //     }
+    //     std::cout.rdbuf(coutFile.rdbuf()); 
+    // }
 
 
 
