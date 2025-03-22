@@ -645,7 +645,7 @@ void MC_MEX_Ionization::apply_vector_indexes(type_calc dt) noexcept{ // using ve
         //NTC modified
         type_calc n_groups_frac = np_neus_in_cell * np_eles_in_cell * W_sigma_v_rel_max * dt * inv_dv; //mpw0 * neutrals.mpw0/mpw0 to scale not equal mpws, neutrals.mpw0 > electrons.mpw0, 
         
-        dmsg("n_groups_frac: " << n_groups_frac << " cell_index: " << c << " np_neus_in_cell: " << np_neus_in_cell << " np_eles_in_cell: "<<  np_eles_in_cell << "\n");
+        // dmsg("n_groups_frac: " << n_groups_frac << " cell_index: " << c << " np_neus_in_cell: " << np_neus_in_cell << " np_eles_in_cell: "<<  np_eles_in_cell << "\n");
         
         int n_groups = (int)(n_groups_frac + 0.5);
         if(n_groups > np_neus_in_cell){ //cannot ionize more then it is aviable to ionize

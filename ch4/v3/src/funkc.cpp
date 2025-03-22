@@ -18,9 +18,11 @@ void print_help(){
 bool parseArgument(const std::vector<std::string>& args, const std::string& option) { //to chceck if command occurs
     for (size_t i = 0; i < args.size(); ++i) {
         if (args[i] == option) {
+            std::cout << " option: " + option + " = " << "true" << "\n";
             return true;
         }
     }
+    std::cout << " option: " + option + " = " << "false" << "\n";
     return false;
 }
 

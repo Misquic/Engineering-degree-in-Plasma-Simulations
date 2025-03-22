@@ -27,14 +27,26 @@ int main(int argc, char* argv[] ){
     // std::cout << splitIntoChunks(12)<< "\n";
 
     // return 0;
+    std::vector<std::string> args(argv + 1, argv+argc); // passing pointers to argv values
 
-    std::ofstream errorFile("outputs/output.txt"); // File to writing errors
-    if (!errorFile) {
+
+    std::ofstream errorFile("outputs/output_cerr.txt"); // File to writing errors
+    if(!errorFile.is_open()){
         std::cerr << "Cannot open file to write std::cerr !" << std::endl;
         return 1;
     }
-
     std::cerr.rdbuf(errorFile.rdbuf()); 
+
+    if(parseArgument(args, "--redirect")){
+        std::ofstream coutFile("outputs/output.txt"); // File to writing std::cout
+        if(!coutFile.is_open()){
+            std::cout << "Cannot open file to write std::cout !" << std::endl;
+            return 1;
+        }
+        std::cout.rdbuf(coutFile.rdbuf()); 
+    }
+
+
 
     #ifdef DEBUG
     std::cout << "DEBUG mode\n";
@@ -43,7 +55,6 @@ int main(int argc, char* argv[] ){
     std::cout << "RELEASE mode\n";
     #endif
 
-    std::vector<std::string> args(argv + 1, argv+argc); // passing pointers to argv values
     if(parseArgument(args, "--help") || parseArgument(args, "--h")){
         print_help();
         return 0;
@@ -103,7 +114,7 @@ int main(int argc, char* argv[] ){
         type_calc T_eles = 10*T;
 
         // type_calc side_z = (world_ptr->getXm()[2] - world_ptr->getX0()[2])*0.9;
-        species[2].loadParticleBoxThermal(type_calc3{world_ptr->getXc()[0], world_ptr->getXc()[1], world_ptr->getXc()[2] + 0.5*world_ptr->getL()[2]*0.85}, type_calc3(world_ptr->getL()[0]*0.01, world_ptr->getL()[1]*0.01, world_ptr->getL()[2]*0.02), num_den_electrons, T_eles);
+        species[2].loadParticleBoxThermal(type_calc3{world_ptr->getXc()[0], world_ptr->getXc()[1], world_ptr->getXc()[2] - 0.5*world_ptr->getL()[2]*0.85}, type_calc3(world_ptr->getL()[0]*0.01, world_ptr->getL()[1]*0.01, world_ptr->getL()[2]*0.02), num_den_electrons, T_eles);
 
         species[0].loadParticleBoxThermal(world_ptr->getXc(), type_calc3(world_ptr->getL()[0], world_ptr->getL()[1], world_ptr->getL()[2]*0.9), num_den_neutrals, T);
         
@@ -158,14 +169,7 @@ int main(int argc, char* argv[] ){
 
     // Output::fields(*world_ptr, species);
     Field<type_calc> phi_0 = world_ptr->phi;
-    while(true){
-        type_calc start = world_ptr->getWallTime();
-        solver_ptr->solve();
-        type_calc stop = world_ptr->getWallTime();
-        std::cout << "\nTime:" << stop - start << "\n";
-        world_ptr->phi = phi_0;
-    }
-    return 0;
+    solver_ptr->solve();
     solver_ptr->computeEF();
     Output::fieldsOutput(*world_ptr, species);
     // world_ptr->setTimeStart();
@@ -208,9 +212,7 @@ int main(int argc, char* argv[] ){
             for(Species&  sp: species){// TODO correct it so for species neutrals refer to species neutrals
                 if(sp.name == electrons.name){ // implemented subcycling //electrons
                     dmsg("electrons start\n");
-                    type_calc time_start = world_ptr->getWallTime();
                     sp.advanceElectrons(dt);
-                    std::cout << "\ntime electrons [s] : " << world_ptr->getWallTime()-time_start;
 
                     sp.sampleMoments();
                     sp.computeNumberDensity();

@@ -19,7 +19,7 @@ void print_help();
 template <class T>
 inline void greaterLesser(T& greater, T& lesser){ // function that makes sure greater > lesser, and swaps them if otherwise
     if(greater < lesser){
-        dmsg("swap greaterLesser\n");
+        // dmsg("swap greaterLesser\n");
         std::swap(greater, lesser);
     }
 }

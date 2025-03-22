@@ -3,6 +3,7 @@
 #include "Species.h"
 #include "Rnd.h"
 #include "Config.h"
+#include "ThreadPool.h"
 
 
 /*Particle constructors*/
@@ -156,10 +157,10 @@ void Species::advanceSputteringSerial(Species& neutrals, Species& spherium, type
         }
         #ifdef DEBUG
         if(part.pos.isNan()){
-            std::cerr << "stop pos nan\n";
+            std::cerr << "Advance Sputtering stop pos nan\n";
         }
         if(part.vel.isNan()){
-            std::cerr << "stop vel nan\n";
+            std::cerr << "Advance Sputtering stop vel nan\n";
         }
         #endif
     }
@@ -255,29 +256,33 @@ void Species::advanceNoSputteringSerial(Species& neutrals, type_calc dt){//TODO 
 };
 
 void Species::advanceElectrons(type_calc dt){
+    type_calc time_start = world.getWallTime();
 
-//TODO coś jakby nie usuwało wszystikch elektronów
     Config& config = Config::getInstance();
     size_t num_part_start = particles.size(); 
     if(config.getMULTITHREADING() && advance_time_multi < advance_time_serial){
-        std::cout << "used multithreading\n";
+        dmsg("used multithreading advanceElectron\n");
 
         type_calc time_multi_start = world.getWallTime();
         // unsigned int num_threads = config.getNumThreads();
-        std::vector<std::thread> threads_advance;
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        ThreadPool& thread_pool = SingletonThreadPool::getInstance();
+        thread_pool.waitForCompletion();
         std::vector<size_t> indexes = splitIntoChunks(particles.size());
-        const unsigned int num_workers = indexes.size()-1;
-        threads_advance.reserve(num_workers);
         std::vector<std::vector<size_t>> parts_to_delete(indexes.size() - 1);//vector of buffers to delete particles of that indexes
-
-        dmsg("creating " << num_workers << "workers for advance electrons\n");
-        for(unsigned int i = 0; i < num_workers; i++){
-            threads_advance.emplace_back(std::thread(&Species::advanceElectronsMultithreading, this, i, dt, indexes[i], indexes[i+1], std::ref(parts_to_delete[i])));
+        // std::queue<std::future<void>> results;
+        // std::cout << "pre: " << thread_pool.queueSize();
+        for(unsigned int i = 0; i < indexes.size()-1; i++){
+            // thread_pool.AddTask(operatorHelper, v, ret, indexes[i], indexes[i+1]);
+            thread_pool.AddTask([this](unsigned int thread_id, type_calc dt, size_t index_start, size_t index_stop, std::vector<size_t>& t_buff){this->advanceElectronsMultithreading(thread_id, dt, index_start, index_stop, t_buff);},i, dt, indexes[i], indexes[i+1], parts_to_delete[i] );
+            // results.emplace(thread_pool.AddTask([this](const tcvector* v_lamb, tcvector* ret_lamb, size_t start, size_t stop){this->operatorHelper(v_lamb, ret_lamb, start, stop);}, &v, &ret, indexes[i], indexes[i+1]));
         }
-        for(std::thread& th: threads_advance){
-            th.join();
-        }
+        // std::cout << "1\n";
+        thread_pool.waitForCompletion();
 
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //deleting particles
         size_t number_of_parts_to_delete{};
         for(const std::vector<size_t>& buf: parts_to_delete){
@@ -303,11 +308,12 @@ void Species::advanceElectrons(type_calc dt){
         }
         advance_time_multi = (world.getWallTime()-time_multi_start)/num_part_start;
     }else{
-        // std::cout << "used serial\n";
+        dmsg("used serial advanceElectron\n");
         type_calc time_serial_start = world.getWallTime();
         advanceElectronsSerial(dt);
         advance_time_serial = (world.getWallTime()-time_serial_start)/num_part_start;
     }
+    dmsg("\ntime electrons [s] : " << world.getWallTime()-time_start);
 };
 void Species::advanceElectronsMultithreading(unsigned int thread_id, type_calc dt, size_t index_start, size_t index_stop, std::vector<size_t>& parts_to_delete){
 

@@ -256,8 +256,9 @@ bool PotentialSolver::solvePCGlinear(const Matrix& A, tcvector& x, const tcvecto
 
     //preallocate
     tcvector z;z.reserve(d.size());
-
-    // const unsigned logInterval = std::max(1u, PCG_max_solver_it / 100);
+#ifdef DEBUG
+    const unsigned logInterval = std::max(1u, PCG_max_solver_it / 100);
+#endif
 
     for(unsigned int it = 0; it < PCG_max_solver_it; it ++){
 #ifdef DEBUG
@@ -288,11 +289,11 @@ bool PotentialSolver::solvePCGlinear(const Matrix& A, tcvector& x, const tcvecto
         d = (alpha/beta)*d - s;
         // checkVec(d);
         L2 = vec::norm(g);
-        // if(it%logInterval==0){
-        //     std::cout << "\r                                      \r"<< type_calc(it)/PCG_max_solver_it*100 << "% PCG, L2: " << L2;
-        // }    
-
-#ifdef DEBUG
+        
+    #ifdef DEBUG
+        if(it%logInterval==0){
+            std::cout << "\r                                      \r"<< type_calc(it)/PCG_max_solver_it*100 << "% PCG, L2: " << L2;
+        }    
         Output::convergenceOutput(L2,it, world.getTs());
 #endif
 

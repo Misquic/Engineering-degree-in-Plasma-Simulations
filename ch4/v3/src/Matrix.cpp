@@ -144,11 +144,12 @@ tcvector Matrix::operator*(const tcvector& v) const{
         ThreadPool& thread_pool = SingletonThreadPool::getInstance();
         thread_pool.waitForCompletion();
         std::vector<size_t> indexes = splitIntoChunks(n_unknowns);
-        std::queue<std::future<void>> results;
+        // std::queue<std::future<void>> results;
         // std::cout << "pre: " << thread_pool.queueSize();
         for(unsigned int i = 0; i < indexes.size()-1; i++){
             // thread_pool.AddTask(operatorHelper, v, ret, indexes[i], indexes[i+1]);
-            results.emplace(thread_pool.AddTask([this](const tcvector* v_lamb, tcvector* ret_lamb, size_t start, size_t stop){this->operatorHelper(v_lamb, ret_lamb, start, stop);}, &v, &ret, indexes[i], indexes[i+1]));
+            thread_pool.AddTask([this](const tcvector* v_lamb, tcvector* ret_lamb, size_t start, size_t stop){this->operatorHelper(v_lamb, ret_lamb, start, stop);}, &v, &ret, indexes[i], indexes[i+1]);
+            // results.emplace(thread_pool.AddTask([this](const tcvector* v_lamb, tcvector* ret_lamb, size_t start, size_t stop){this->operatorHelper(v_lamb, ret_lamb, start, stop);}, &v, &ret, indexes[i], indexes[i+1]));
         }
         // std::cout << "1\n";
         thread_pool.waitForCompletion();
